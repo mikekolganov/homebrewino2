@@ -11,6 +11,7 @@ void inline keyboard_releaseKeys() {
   
   keyboard_shortPress = false;
   keyboard_longPress  = false;
+  keyboard_holdPress = false;
 }
 
 void inline keyboard_event(byte key, byte eventType) {
@@ -27,32 +28,37 @@ void inline keyboard_event(byte key, byte eventType) {
   switch (eventType) {
     case BUTTON_SHORTPRESS: keyboard_shortPress = true; break;
     case BUTTON_LONGPRESS:  keyboard_longPress  = true; break;
+    case BUTTON_HOLDPRESS:  keyboard_holdPress  = true; break;
   }
 }
 
+word keypad;
+
 byte inline keyboard_getPressedKey() {
   word escape = analogRead(PIN_BUTTON_ESCAPE);
-  if (0 <= escape && escape < KEYBOARD_VOLTAGE_ESC + KEYBOARD_VOLTAGE_DEVIATION) {
+  if (0 <= escape && escape < 30) {
     return BUTTON_ESCAPE;
   }
 
-  word keypad = analogRead(PIN_BUTTON_KEYS);
-  if (KEYBOARD_VOLTAGE_UP - KEYBOARD_VOLTAGE_DEVIATION < keypad && keypad < KEYBOARD_VOLTAGE_UP + KEYBOARD_VOLTAGE_DEVIATION) { 
+  keypad = analogRead(PIN_BUTTON_KEYS);
+  if (130 < keypad && keypad < 200) { 
     return BUTTON_UP; 
   }
-  if (KEYBOARD_VOLTAGE_DOWN - KEYBOARD_VOLTAGE_DEVIATION < keypad && keypad < KEYBOARD_VOLTAGE_DOWN + KEYBOARD_VOLTAGE_DEVIATION) { 
+  else if (300 < keypad && keypad < 390) { 
     return BUTTON_DOWN; 
   }
-  if (KEYBOARD_VOLTAGE_LEFT - KEYBOARD_VOLTAGE_DEVIATION < keypad && keypad < KEYBOARD_VOLTAGE_LEFT + KEYBOARD_VOLTAGE_DEVIATION) { 
+  else if (470 < keypad && keypad < 490) { 
     return BUTTON_LEFT; 
   }
-  if (0 < keypad && keypad < KEYBOARD_VOLTAGE_RIGHT + KEYBOARD_VOLTAGE_DEVIATION) { 
+  else if (0 <= keypad && keypad < 110) { 
     return BUTTON_RIGHT; 
   }
-  if (KEYBOARD_VOLTAGE_ENTER - KEYBOARD_VOLTAGE_DEVIATION < keypad && keypad < KEYBOARD_VOLTAGE_ENTER + KEYBOARD_VOLTAGE_DEVIATION) { 
+  else if (710 < keypad && keypad < 730) { 
     return BUTTON_ENTER; 
   }
-  return BUTTON_NONE;
+  else {
+    return BUTTON_NONE;
+  }
 }
 
 void inline keyboard_loop(unsigned long now) {

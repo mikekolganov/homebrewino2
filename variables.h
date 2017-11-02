@@ -46,9 +46,9 @@ char display_activeIterable[6] = { 0, 0, 0, 0, 0, 0 };
 char display_activeIterablePrevious[6] = { 0, 0, 0, 0, 0, 0 };
 
 byte display_programEditItem = 0;
-int display_programEdit_A = 0;
-int display_programEdit_B = 0;
-int display_programEdit_C = 0;
+int  display_programEdit_A = 0;
+int  display_programEdit_B = 0;
+int  display_programEdit_C = 0;
 
 byte setting_heaterPower;
 byte setting_tankVolume;
@@ -57,8 +57,8 @@ byte setting_fanTemp;
 
 byte brew_status;
 word brew_timeProcessed;
-byte brew_program[10][3];
 byte brew_programLength = 0;
+int  brew_program[PROGRAM_ITEMS_MAX_COUNT][3];
 
 byte heater_relayMode    = RELAY_MODE_AUTO;
 bool heater_relayEnabled = false;
@@ -69,5 +69,10 @@ bool fan_relayEnabled    = false;
 
 const char POINTER_SYMBOL = char(165);
 const char DEGREE_SYMBOL  = char(223);
+
+int buzzer_sequence[20];
+byte buzzer_sequenceIndex = 0;
+byte buzzer_sequenceLength = 0;
+unsigned long buzzer_nextToneTime = 0;
 
 #endif

@@ -28,6 +28,7 @@ void setup() {
   digitalWrite(PIN_RELAY_FAN, HIGH);
   EEPROM.setMemPool(0, EEPROMSizeUno);
   EEPROM.setMaxAllowedWrites(2000);
+  analogWrite(PIN_DISPLAY_BACKLIGHT, round(255 / 100 * 30));
 }
 
 void loop() {

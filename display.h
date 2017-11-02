@@ -1,54 +1,56 @@
 #include "constants.h"
 #include "variables.h"
 
-inline char* display_iterable(char items[][16], byte count, byte activeItem, byte prevActiveItem) {
+inline void display_iterable(char items[][16], byte count, byte activeItem, byte prevActiveItem) {
   char result[32];
+  display_iterableCount = count;
 
   char pointer[1] = { POINTER_SYMBOL };
   if (count == 1) {
     strcpy(result, pointer);
     strcpy(result + 1, items[0]);
-    return result;
+    strcpy(result + 16, "                ");
   }
-  if (count == 2) {
+  else if (count == 2) {
     strcpy(result, activeItem == 0 ? pointer : " ");
     strcpy(result + 1, items[0]);
     strcpy(result + 16, activeItem == 1 ? pointer : " ");
     strcpy(result + 17, items[1]);
-    return result;
+  }
+  else {
+    for (byte i = 0; i < count; i++) {
+      if (i != activeItem) continue;
+      bool upDirection = true;
+      if (activeItem == prevActiveItem) {
+        upDirection = true;
+      }
+      else if (activeItem == 0 && prevActiveItem == (count - 1)) {
+        upDirection = false;
+      }
+      else if (activeItem == (count - 1) && prevActiveItem == 0) {
+        upDirection = true;
+      }
+      else {
+        upDirection = prevActiveItem > activeItem;
+      }
+
+      if (upDirection) {
+        strcpy(result, pointer);
+        strcpy(result + 1, items[i]);
+        strcpy(result + 16, " ");
+        strcpy(result + 17, (i == count - 1) ? items[0] : items[i + 1]);
+      }
+      else {
+        strcpy(result, " ");
+        strcpy(result + 1, (i == 0) ? items[count - 1] : items[i - 1]);
+        strcpy(result + 16, pointer);
+        strcpy(result + 17, items[i]);
+      }
+    }
   }
 
-  for (byte i = 0; i < count; i++) {
-    if (i != activeItem) continue;
-    bool upDirection = true;
-    if (activeItem == prevActiveItem) {
-      upDirection = true;
-    }
-    else if (activeItem == 0 && prevActiveItem == (count - 1)) {
-      upDirection = false;
-    }
-    else if (activeItem == (count - 1) && prevActiveItem == 0) {
-      upDirection = true;
-    }
-    else {
-      upDirection = prevActiveItem > activeItem;
-    }
-
-    if (upDirection) {
-      strcpy(result, pointer);
-      strcpy(result + 1, items[i]);
-      strcpy(result + 16, " ");
-      strcpy(result + 17, (i == count - 1) ? items[0] : items[i + 1]);
-    }
-    else {
-      strcpy(result, " ");
-      strcpy(result + 1, (i == 0) ? items[count - 1] : items[i - 1]);
-      strcpy(result + 16, pointer);
-      strcpy(result + 17, items[i]);
-    }
-  }
-
-  return result;
+  strncpy(display_firstLine, result, 16);
+  strncpy(display_secondLine, result+16, 16);
 }
 
 void inline display_dashboard() {
@@ -72,48 +74,77 @@ void inline display_dashboard() {
 }
 
 void inline display_main() {
-  char items[SCREEN_ITEMS_MAIN][16];
+  char items[2][16];
   strcpy(items[SCREEN_ITEM_MAIN_PROGRAM], "PROGRAM");
   strcpy(items[SCREEN_ITEM_MAIN_SETTINGS], "SETTINGS");
-  display_iterableCount = 2;
-  char* menu = display_iterable(items, SCREEN_ITEMS_MAIN, display_activeIterable[SCREEN_MAIN], display_activeIterablePrevious[SCREEN_MAIN]);
-  strncpy(display_firstLine, menu, 16);
-  strncpy(display_secondLine, menu+16, 16);
+  display_iterable(items, 2, display_activeIterable[SCREEN_MAIN], display_activeIterablePrevious[SCREEN_MAIN]);
+}
+
+inline void display_wrapAlign(char *result, char left[15], char right[15], byte resultLength) {
+  for(byte i = 0; i < resultLength; i++) {
+    if (i < strlen(left)) {
+      result[i] = left[i];
+    }
+    else if (resultLength - i > strlen(right)) {
+      result[i] = ' ';
+    }
+    else {
+      result[i] = right[strlen(right) - (resultLength - i)];
+    }
+  }
+  result[resultLength] = '\0';
 }
 
 void inline display_settings() {
-  char items[4][16];
-  strcpy(items[SCREEN_ITEM_SETTINGS_POWER], "POWER");
-  strcpy(items[SCREEN_ITEM_SETTINGS_TANK], "TANK");
-  strcpy(items[SCREEN_ITEM_SETTINGS_BACKLIGHT], "BACKLIGHT");
-  strcpy(items[SCREEN_ITEM_SETTINGS_FAN_AT], "FAN AT");
-  display_iterableCount = 4;
-  char* menu = display_iterable(items, 4, display_activeIterable[SCREEN_SETTINGS], display_activeIterablePrevious[SCREEN_SETTINGS]);
-  strncpy(display_firstLine, menu, 16);
-  strncpy(display_secondLine, menu+16, 16);
+  char items[5][16];
+  display_wrapAlign(items[SCREEN_ITEM_SETTINGS_POWER], "POWER", "3200W", 15);
+  display_wrapAlign(items[SCREEN_ITEM_SETTINGS_TANK], "TANK", "28L", 15);
+  display_wrapAlign(items[SCREEN_ITEM_SETTINGS_BACKLIGHT], "BACKLIGHT", "80%", 15);
+  display_wrapAlign(items[SCREEN_ITEM_SETTINGS_FAN_AT], "FAN AT", "60*", 15);
+  display_wrapAlign(items[SCREEN_ITEM_SETTINGS_PUMP_AT], "PUMP AT", "1.5*", 15);
+  display_iterable(items, 5, display_activeIterable[SCREEN_SETTINGS], display_activeIterablePrevious[SCREEN_SETTINGS]);
 }
 
-char* display_program_print_item_oneline(byte itemIndex) {
-  char result[16];
+inline char* formatMinutes(int minutes) {
+  char result[5];
+  int h = minutes / 60;
+  int m = minutes % 60;
+
+  itoa(h, result, 10);
+  strcpy(result+strlen(result), ":");
+  if (m < 10) strcpy(result+strlen(result), "0");
+  itoa(m, result+strlen(result), 10);
+
+  return result;
+}
+
+inline char* display_program_print_item_oneline(byte itemIndex) {
+  char result[16] = "";
+  char degree[1] = { char(223) };
+
+  itoa(itemIndex + 1, result + strlen(result), 10);
+  strcpy(result + strlen(result), " ");
+
   switch (brew_program[itemIndex][0]) {
     case PROGRAM_ITEM_MASH:
-      strcpy(result, "MASH 0:25 62");
-      result[strlen(result)+1] = '\0';
-      result[strlen(result)] = DEGREE_SYMBOL;
+      strcpy(result + strlen(result), formatMinutes(brew_program[itemIndex][1]));
+      strcpy(result + strlen(result), " AT ");
+      itoa(brew_program[itemIndex][2], result + strlen(result), 10);
+      strncpy(result + strlen(result), degree, 1);
       break;
     case PROGRAM_ITEM_BOILING:
-      strcpy(result, "BOIL 1:10");
+      strcpy(result + strlen(result), "BOIL ");
+      strcpy(result + strlen(result), formatMinutes(brew_program[itemIndex][1]));
       break;
     case PROGRAM_ITEM_REMINDER_TIME:
-      strcpy(result, "PING +0:15");
+      strcpy(result + strlen(result), "ALARM +");
+      strcpy(result + strlen(result), formatMinutes(brew_program[itemIndex][1]));
       break;
     case PROGRAM_ITEM_REMINDER_TEMP:
-      strcpy(result, "PING 56");
-      result[strlen(result)+1] = '\0';
-      result[strlen(result)] = DEGREE_SYMBOL;
+      strcpy(result + strlen(result), "ALARM ");
+      itoa(brew_program[itemIndex][1], result + strlen(result), 10);
+      strncpy(result + strlen(result), degree, 1);
       break;
-    default:
-      strcpy(result, "FAIL");
   }
   return result;
 }
@@ -127,11 +158,7 @@ void inline display_program() {
     strcpy(items[i], item);
   }
   strcpy(items[brew_programLength], "ADD NEW STEP");
-  display_iterableCount = brew_programLength + 1;
-  menu = display_iterable(items, brew_programLength + 1, display_activeIterable[SCREEN_PROGRAM], display_activeIterablePrevious[SCREEN_PROGRAM]);
-
-  strncpy(display_firstLine, menu, 16);
-  strncpy(display_secondLine, menu+16, 16);
+  display_iterable(items, brew_programLength + 1, display_activeIterable[SCREEN_PROGRAM], display_activeIterablePrevious[SCREEN_PROGRAM]);
 }
 
 void inline display_program_edit() {
@@ -147,44 +174,71 @@ void inline display_program_edit() {
     strcpy(display_firstLine + strlen(display_firstLine), ": ");
   }
   else {
-    strcpy(display_firstLine, "NEW: ");
+    strcpy(display_firstLine, "ADD: ");
   }
 
   counter = strlen(display_firstLine);
   display_firstLine[counter] = display_activeIterable[SCREEN_PROGRAM_EDIT] == 0 ? POINTER_SYMBOL : ' ';
   display_firstLine[++counter] = '\0';
 
-  display_iterableCount = 3;
-
   switch (display_programEdit_A) {
     case PROGRAM_ITEM_MASH:
+      display_iterableCount = 3;
       strcpy(display_firstLine + strlen(display_firstLine), "MASH");
+      
+      display_secondLine[0] = display_activeIterable[SCREEN_PROGRAM_EDIT] == 1 ? POINTER_SYMBOL : ' ';
+      display_secondLine[1] = '\0';
+      strcpy(display_secondLine + strlen(display_secondLine), formatMinutes(display_programEdit_B));
+      strcpy(display_secondLine + strlen(display_secondLine), " AT ");
+    
+      counter = strlen(display_secondLine);
+      display_secondLine[counter] = display_activeIterable[SCREEN_PROGRAM_EDIT] == 2 ? POINTER_SYMBOL : ' ';
+      display_secondLine[++counter] = '\0';
+      itoa(display_programEdit_C, display_secondLine + strlen(display_secondLine), 10);
+    
+      counter = strlen(display_secondLine);
+      display_secondLine[counter] = DEGREE_SYMBOL;
+      display_secondLine[++counter] = '\0';
       break;
+      
     case PROGRAM_ITEM_BOILING:
-      strcpy(display_firstLine + strlen(display_firstLine), "BOILING");
+      display_iterableCount = 2;
+      strcpy(display_firstLine + strlen(display_firstLine), "BOIL");
+
+      display_secondLine[0] = display_activeIterable[SCREEN_PROGRAM_EDIT] == 1 ? POINTER_SYMBOL : ' ';
+      display_secondLine[1] = '\0';
+      strcpy(display_secondLine + strlen(display_secondLine), formatMinutes(display_programEdit_B));
+      strcpy(display_secondLine + strlen(display_secondLine), " AT 100");
+      counter = strlen(display_secondLine);
+      display_secondLine[counter] = DEGREE_SYMBOL;
+      display_secondLine[++counter] = '\0';
       break;
+
     case PROGRAM_ITEM_REMINDER_TIME:
-      strcpy(display_firstLine + strlen(display_firstLine), "AT TIME");
+      display_iterableCount = 2;
+      strcpy(display_firstLine + strlen(display_firstLine), "ALARM");
+
+      strcpy(display_secondLine, "AFTER ");
+      counter = strlen(display_secondLine);
+      display_secondLine[counter] = display_activeIterable[SCREEN_PROGRAM_EDIT] == 1 ? POINTER_SYMBOL : ' ';
+      display_secondLine[++counter] = '\0';
+      strcpy(display_secondLine + strlen(display_secondLine), formatMinutes(display_programEdit_B));
       break;
+      
     case PROGRAM_ITEM_REMINDER_TEMP:
-      strcpy(display_firstLine + strlen(display_firstLine), "AT TEMP");
+      display_iterableCount = 2;
+      strcpy(display_firstLine + strlen(display_firstLine), "ALARM");
+
+      strcpy(display_secondLine, "ON ");
+      counter = strlen(display_secondLine);
+      display_secondLine[counter] = display_activeIterable[SCREEN_PROGRAM_EDIT] == 1 ? POINTER_SYMBOL : ' ';
+      display_secondLine[++counter] = '\0';
+      itoa(display_programEdit_B, display_secondLine + strlen(display_secondLine), 10);
+      counter = strlen(display_secondLine);
+      display_secondLine[counter] = DEGREE_SYMBOL;
+      display_secondLine[++counter] = '\0';
       break;
   }
-
-  display_secondLine[0] = display_activeIterable[SCREEN_PROGRAM_EDIT] == 1 ? POINTER_SYMBOL : ' ';
-  display_secondLine[1] = '\0';
-  itoa(display_programEdit_B, display_secondLine + strlen(display_secondLine), 10);
-
-  strcpy(display_secondLine + strlen(display_secondLine), " AT ");
-
-  counter = strlen(display_secondLine);
-  display_secondLine[counter] = display_activeIterable[SCREEN_PROGRAM_EDIT] == 2 ? POINTER_SYMBOL : ' ';
-  display_secondLine[++counter] = '\0';
-  itoa(display_programEdit_C, display_secondLine + strlen(display_secondLine), 10);
-
-  counter = strlen(display_secondLine);
-  display_secondLine[counter] = DEGREE_SYMBOL;
-  display_secondLine[++counter] = '\0';
 }
 
 void inline display_render() {
@@ -210,13 +264,29 @@ void inline display_changeScreen(byte screen) {
 
 void inline display_dashboard_listeners() {
   if (keyboard_escapePressed && keyboard_shortPress) {
+    buzzer_buttonShort();
     keyboard_releaseKeys();
     display_changeScreen(SCREEN_MAIN);
+  }
+  else if (keyboard_upPressed && keyboard_shortPress) {
+    buzzer_saved();
+    keyboard_releaseKeys();
+  }
+  else if (keyboard_downPressed && keyboard_shortPress) {
+    buzzer_deleted();
+    keyboard_releaseKeys();
+  }
+  else if (keyboard_leftPressed && keyboard_shortPress) {
+
+  }
+  else if (keyboard_rightPressed && keyboard_shortPress) {
+
   }
 }
 
 void inline display_main_listeners() {
   if (keyboard_escapePressed && keyboard_shortPress) {
+    buzzer_buttonShort();
     keyboard_releaseKeys();
     display_changeScreen(SCREEN_DASHBOARD);
   }
@@ -225,14 +295,17 @@ void inline display_main_listeners() {
     keyboard_downPressed ? display_activeIterable[SCREEN_MAIN]++ : display_activeIterable[SCREEN_MAIN]--;
     if (display_activeIterable[SCREEN_MAIN] >= display_iterableCount) { display_activeIterable[SCREEN_MAIN] = 0; }
     else if (display_activeIterable[SCREEN_MAIN] < 0) { display_activeIterable[SCREEN_MAIN] = display_iterableCount - 1; }
+    buzzer_buttonShort();
     keyboard_releaseKeys();
     display_changeScreen(SCREEN_MAIN);
   }
   else if (display_activeIterable[SCREEN_MAIN] == SCREEN_ITEM_MAIN_SETTINGS && keyboard_enterPressed && keyboard_shortPress) {
+    buzzer_buttonShort();
     keyboard_releaseKeys();
     display_changeScreen(SCREEN_SETTINGS);
   }
   else if (display_activeIterable[SCREEN_MAIN] == SCREEN_ITEM_MAIN_PROGRAM && keyboard_enterPressed && keyboard_shortPress) {
+    buzzer_buttonShort();
     keyboard_releaseKeys();
     display_changeScreen(SCREEN_PROGRAM);
   }
@@ -240,6 +313,7 @@ void inline display_main_listeners() {
 
 void inline display_settings_listeners() {  
   if (keyboard_escapePressed && keyboard_shortPress) {
+    buzzer_buttonShort();
     keyboard_releaseKeys();
     display_changeScreen(SCREEN_MAIN);
   }
@@ -248,6 +322,7 @@ void inline display_settings_listeners() {
     keyboard_downPressed ? display_activeIterable[SCREEN_SETTINGS]++ : display_activeIterable[SCREEN_SETTINGS]--;
     if (display_activeIterable[SCREEN_SETTINGS] >= display_iterableCount) { display_activeIterable[SCREEN_SETTINGS] = 0; }
     else if (display_activeIterable[SCREEN_SETTINGS] < 0) { display_activeIterable[SCREEN_SETTINGS] = display_iterableCount - 1; }
+    buzzer_buttonShort();
     keyboard_releaseKeys();
     display_changeScreen(SCREEN_SETTINGS);
   }
@@ -255,6 +330,7 @@ void inline display_settings_listeners() {
 
 void inline display_program_listeners() {
   if (keyboard_escapePressed && keyboard_shortPress) {
+    buzzer_buttonShort();
     keyboard_releaseKeys();
     display_changeScreen(SCREEN_MAIN);
   }
@@ -263,17 +339,55 @@ void inline display_program_listeners() {
     keyboard_downPressed ? display_activeIterable[SCREEN_PROGRAM]++ : display_activeIterable[SCREEN_PROGRAM]--;
     if (display_activeIterable[SCREEN_PROGRAM] >= display_iterableCount) { display_activeIterable[SCREEN_PROGRAM] = 0; }
     else if (display_activeIterable[SCREEN_PROGRAM] < 0) { display_activeIterable[SCREEN_PROGRAM] = display_iterableCount - 1; }
+    buzzer_buttonShort();
     keyboard_releaseKeys();
     display_changeScreen(SCREEN_PROGRAM);
   }
+  else if ((keyboard_upPressed || keyboard_downPressed) && keyboard_longPress) {
+    bool isProgramItem = display_activeIterable[SCREEN_PROGRAM] <= brew_programLength - 1;
+    if (isProgramItem) {
+      bool upDirection = display_activeIterable[SCREEN_PROGRAM] < display_activeIterablePrevious[SCREEN_PROGRAM];
+
+      int temp[3];
+      byte currentIndex = display_activeIterable[SCREEN_PROGRAM];
+      byte moveToIndex = upDirection ? currentIndex - 1 : currentIndex + 1;
+      if (moveToIndex >= brew_programLength) { moveToIndex = 0; }
+      else if (moveToIndex < 0) { moveToIndex = brew_programLength - 1; }
+
+      memcpy(temp, brew_program[moveToIndex], sizeof(brew_program[moveToIndex]));
+      memcpy(brew_program[moveToIndex], brew_program[currentIndex], sizeof(brew_program[currentIndex]));
+      memcpy(brew_program[currentIndex], temp, sizeof(temp));
+
+      display_activeIterable[SCREEN_PROGRAM] = moveToIndex;
+      display_activeIterablePrevious[SCREEN_PROGRAM] = currentIndex;
+
+      buzzer_saved();
+      keyboard_releaseKeys();
+      display_changeScreen(SCREEN_PROGRAM);
+    }
+  }
   else if (keyboard_enterPressed && keyboard_shortPress) {
+    bool existing = brew_programLength >= (display_programEditItem + 1);
+
+    display_activeIterable[SCREEN_PROGRAM_EDIT] = 0;
+
+    if (existing) {
+      display_programEditItem = display_activeIterable[SCREEN_PROGRAM];
+      display_programEdit_A = brew_program[display_programEditItem][0];
+      display_programEdit_B = brew_program[display_programEditItem][1];
+      display_programEdit_C = brew_program[display_programEditItem][2];
+    }
+
     display_programEditItem = display_activeIterable[SCREEN_PROGRAM];
+    buzzer_buttonShort();
+    keyboard_releaseKeys();
     display_changeScreen(SCREEN_PROGRAM_EDIT);
   }
 }
 
 void inline display_program_edit_listeners() {
   if (keyboard_escapePressed && keyboard_shortPress) {
+    buzzer_buttonShort();
     keyboard_releaseKeys();
     display_changeScreen(SCREEN_PROGRAM);
   }
@@ -281,6 +395,7 @@ void inline display_program_edit_listeners() {
     keyboard_downPressed ? display_activeIterable[SCREEN_PROGRAM_EDIT]++ : display_activeIterable[SCREEN_PROGRAM_EDIT]--;
     if (display_activeIterable[SCREEN_PROGRAM_EDIT] >= display_iterableCount) { display_activeIterable[SCREEN_PROGRAM_EDIT] = 0; }
     else if (display_activeIterable[SCREEN_PROGRAM_EDIT] < 0) { display_activeIterable[SCREEN_PROGRAM_EDIT] = display_iterableCount - 1; }
+    buzzer_buttonShort();
     keyboard_releaseKeys();
     display_changeScreen(SCREEN_PROGRAM_EDIT);
   }
@@ -296,6 +411,30 @@ void inline display_program_edit_listeners() {
     else if (display_activeIterable[SCREEN_PROGRAM_EDIT] == 2) {
       keyboard_leftPressed ? display_programEdit_C-- : display_programEdit_C++;
     }
+
+    if (display_programEdit_B < 0) display_programEdit_B = 0;
+    if (display_programEdit_C < 0) display_programEdit_C = 0;
+
+    buzzer_buttonShort();
+    keyboard_releaseKeys();
+    display_changeScreen(SCREEN_PROGRAM_EDIT);
+  }
+  else if ((keyboard_leftPressed || keyboard_rightPressed) && (keyboard_holdPress || keyboard_longPress)) {
+    if (display_activeIterable[SCREEN_PROGRAM_EDIT] == 1) {
+      display_programEdit_B = keyboard_leftPressed 
+        ? display_programEdit_B - 10 
+        : display_programEdit_B + 10;
+    } 
+    else if (display_activeIterable[SCREEN_PROGRAM_EDIT] == 2) {
+      display_programEdit_C = keyboard_leftPressed 
+        ? display_programEdit_C - 10 
+        : display_programEdit_C + 10;
+    }
+
+    if (display_programEdit_B < 0) display_programEdit_B = 0;
+    if (display_programEdit_C < 0) display_programEdit_C = 0;
+
+    buzzer_buttonShort();
     keyboard_releaseKeys();
     display_changeScreen(SCREEN_PROGRAM_EDIT);
   }
@@ -309,16 +448,31 @@ void inline display_program_edit_listeners() {
     if (! existing) {
       brew_programLength++;
     }
+
+    buzzer_saved();
     keyboard_releaseKeys();
     display_changeScreen(SCREEN_PROGRAM);
   }
   else if (keyboard_escapePressed && keyboard_longPress) {
-    Serial.println("DELETE");
-    Serial.println(brew_programLength);
-    Serial.println(display_programEditItem);
-    Serial.println("---");
-    keyboard_releaseKeys();
-    display_changeScreen(SCREEN_PROGRAM);
+    bool existing = brew_programLength >= (display_programEditItem + 1);
+
+    if (existing) {
+      if (display_programEditItem < brew_programLength - 1) {
+        for (byte i = display_programEditItem; i < brew_programLength - 1; i++) {
+          brew_program[i][0] = brew_program[i+1][0];
+          brew_program[i][1] = brew_program[i+1][1];
+          brew_program[i][2] = brew_program[i+1][2];
+        }
+      }
+
+      brew_program[brew_programLength - 1][0] = 0;
+      brew_program[brew_programLength - 1][1] = 0;
+      brew_program[brew_programLength - 1][2] = 0;
+      brew_programLength--;
+      buzzer_deleted();
+      keyboard_releaseKeys();
+      display_changeScreen(SCREEN_PROGRAM);
+    }
   }
 }
 
