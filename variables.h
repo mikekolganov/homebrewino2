@@ -35,10 +35,8 @@ bool relay_fanEnabled    = false;
 bool relay_pumpEnabled   = false;
 
 unsigned long display_willChange = 0;
-char display_firstLine[16];
-char display_secondLine[16];
-char display_firstLinePrevious[16];
-char display_secondLinePrevious[16];
+char display_firstLine[17];
+char display_secondLine[17];
 byte display_screenCurrent = SCREEN_DASHBOARD;
 byte display_screenPrevious;
 byte display_iterableCount = 0;
@@ -54,6 +52,7 @@ byte setting_heaterPower;
 byte setting_tankVolume;
 byte setting_backlightLevel;
 byte setting_fanTemp;
+byte setting_pumpTempDelta;
 
 byte brew_status;
 word brew_timeProcessed;
@@ -67,8 +66,22 @@ bool pump_relayEnabled   = false;
 byte fan_relayMode       = RELAY_MODE_AUTO;
 bool fan_relayEnabled    = false;
 
+byte DELTA_SYMBOL_1[8] = {
+	0b00000,
+	0b00000,
+	0b00100,
+	0b01010,
+	0b10001,
+	0b11111,
+	0b00000,
+	0b00000
+};
+
 const char POINTER_SYMBOL = char(165);
 const char DEGREE_SYMBOL  = char(223);
+char pointerSymbol[2] = { POINTER_SYMBOL, '\0' };
+char degreeSymbol[2] = { DEGREE_SYMBOL, '\0' };
+char deltaSymbol[2] = { 1, '\0' };
 
 int buzzer_sequence[20];
 byte buzzer_sequenceIndex = 0;

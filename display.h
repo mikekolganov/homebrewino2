@@ -1,21 +1,44 @@
 #include "constants.h"
 #include "variables.h"
 
-inline void display_iterable(char items[][16], byte count, byte activeItem, byte prevActiveItem) {
-  char result[32];
+inline void display_wrapAlign(char *result, char left[15], char right[15], byte resultLength) {
+  for(byte i = 0; i < resultLength; i++) {
+    if (i < strlen(left)) {
+      result[i] = left[i];
+    }
+    else if (resultLength - i > strlen(right)) {
+      result[i] = ' ';
+    }
+    else {
+      result[i] = right[strlen(right) - (resultLength - i)];
+    }
+  }
+  result[resultLength] = '\0';
+}
+
+inline void display_format_minutes(char *result, int minutes) {
+  int h = minutes / 60;
+  int m = minutes % 60;
+
+  itoa(h, result + strlen(result), 10);
+  strcpy(result + strlen(result), ":");
+  if (m < 10) strcpy(result + strlen(result), "0");
+  itoa(m, result + strlen(result), 10);
+}
+
+inline void display_render_iterable_menu(char items[][16], byte count, byte activeItem, byte prevActiveItem) {
   display_iterableCount = count;
 
-  char pointer[1] = { POINTER_SYMBOL };
   if (count == 1) {
-    strcpy(result, pointer);
-    strcpy(result + 1, items[0]);
-    strcpy(result + 16, "                ");
+    strcpy(display_firstLine, pointerSymbol);
+    strcpy(display_firstLine + 1, items[0]);
+    strcpy(display_secondLine, "                ");
   }
   else if (count == 2) {
-    strcpy(result, activeItem == 0 ? pointer : " ");
-    strcpy(result + 1, items[0]);
-    strcpy(result + 16, activeItem == 1 ? pointer : " ");
-    strcpy(result + 17, items[1]);
+    strcpy(display_firstLine, activeItem == 0 ? pointerSymbol : " ");
+    strcpy(display_firstLine + 1, items[0]);
+    strcpy(display_secondLine, activeItem == 1 ? pointerSymbol : " ");
+    strcpy(display_secondLine + 1, items[1]);
   }
   else {
     for (byte i = 0; i < count; i++) {
@@ -35,91 +58,76 @@ inline void display_iterable(char items[][16], byte count, byte activeItem, byte
       }
 
       if (upDirection) {
-        strcpy(result, pointer);
-        strcpy(result + 1, items[i]);
-        strcpy(result + 16, " ");
-        strcpy(result + 17, (i == count - 1) ? items[0] : items[i + 1]);
+        strcpy(display_firstLine, pointerSymbol);
+        strcpy(display_firstLine + 1, items[i]);
+        strcpy(display_secondLine, " ");
+        strcpy(display_secondLine + 1, (i == count - 1) ? items[0] : items[i + 1]);
       }
       else {
-        strcpy(result, " ");
-        strcpy(result + 1, (i == 0) ? items[count - 1] : items[i - 1]);
-        strcpy(result + 16, pointer);
-        strcpy(result + 17, items[i]);
+        strcpy(display_firstLine, " ");
+        strcpy(display_firstLine + 1, (i == 0) ? items[count - 1] : items[i - 1]);
+        strcpy(display_secondLine, pointerSymbol);
+        strcpy(display_secondLine + 1, items[i]);
       }
     }
   }
-
-  strncpy(display_firstLine, result, 16);
-  strncpy(display_secondLine, result+16, 16);
 }
 
-void inline display_dashboard() {
+inline void display_render_dashboard() {
   unsigned long now = millis();
-  char s_temp1[7];
-  char s_temp2[7];
-  dtostrf(sensor_brewing1, 4, 1, s_temp1);
-  dtostrf(sensor_brewing2, 4, 1, s_temp2);
+  char brew_temp1[7];
+  char brew_temp2[7];
 
-  s_temp1[strlen(s_temp1)+1] = '\0';
-  s_temp2[strlen(s_temp2)+1] = '\0';
-  s_temp1[strlen(s_temp1)] = DEGREE_SYMBOL;
-  s_temp2[strlen(s_temp2)] = DEGREE_SYMBOL;
+  dtostrf(sensor_brewing1, 4, 1, brew_temp1);
+  dtostrf(sensor_brewing2, 4, 1, brew_temp2);
 
-  sprintf(display_firstLine, "%s %s", s_temp1, s_temp2);
-
-  char s2[10] = "";
-  strcpy(display_secondLine, s2);
+  strcpy(brew_temp1 + strlen(brew_temp1), degreeSymbol);
+  strcpy(brew_temp2 + strlen(brew_temp2), degreeSymbol);
+  sprintf(display_firstLine, "%s %s", brew_temp1, brew_temp2);
+  strcpy(display_secondLine, "                ");
 
   display_willChange = now + 500;
 }
 
-void inline display_main() {
+inline void display_render_main() {
   char items[2][16];
   strcpy(items[SCREEN_ITEM_MAIN_PROGRAM], "PROGRAM");
   strcpy(items[SCREEN_ITEM_MAIN_SETTINGS], "SETTINGS");
-  display_iterable(items, 2, display_activeIterable[SCREEN_MAIN], display_activeIterablePrevious[SCREEN_MAIN]);
+  display_render_iterable_menu(items, 2, display_activeIterable[SCREEN_MAIN], display_activeIterablePrevious[SCREEN_MAIN]);
 }
 
-inline void display_wrapAlign(char *result, char left[15], char right[15], byte resultLength) {
-  for(byte i = 0; i < resultLength; i++) {
-    if (i < strlen(left)) {
-      result[i] = left[i];
-    }
-    else if (resultLength - i > strlen(right)) {
-      result[i] = ' ';
-    }
-    else {
-      result[i] = right[strlen(right) - (resultLength - i)];
-    }
-  }
-  result[resultLength] = '\0';
-}
+inline void display_render_settings() {
+  char powerValue[6];
+  itoa(setting_heaterPower * HEATER_POWER_MULTIPLIER, powerValue, 10);
+  strcpy(powerValue + strlen(powerValue), "W");
 
-void inline display_settings() {
+  char tankValue[6];
+  itoa(setting_tankVolume, tankValue, 10);
+  strcpy(tankValue + strlen(tankValue), "L");
+
+  char backlightValue[6];
+  itoa(setting_backlightLevel, backlightValue, 10);
+  strcpy(backlightValue + strlen(backlightValue), "%");
+
+  char fanAtValue[6];
+  itoa(setting_fanTemp, fanAtValue, 10);
+  strcpy(fanAtValue + strlen(fanAtValue), degreeSymbol);
+
+  char pumpAtValue[6];
+  strcpy(pumpAtValue, deltaSymbol);
+  dtostrf(setting_pumpTempDelta * PUMP_TEMP_DELTA_MULTIPLIER, 3, 1, pumpAtValue + strlen(pumpAtValue));
+  strcpy(pumpAtValue + strlen(pumpAtValue), degreeSymbol);
+
   char items[5][16];
-  display_wrapAlign(items[SCREEN_ITEM_SETTINGS_POWER], "POWER", "3200W", 15);
-  display_wrapAlign(items[SCREEN_ITEM_SETTINGS_TANK], "TANK", "28L", 15);
-  display_wrapAlign(items[SCREEN_ITEM_SETTINGS_BACKLIGHT], "BACKLIGHT", "80%", 15);
-  display_wrapAlign(items[SCREEN_ITEM_SETTINGS_FAN_AT], "FAN AT", "60*", 15);
-  display_wrapAlign(items[SCREEN_ITEM_SETTINGS_PUMP_AT], "PUMP AT", "1.5*", 15);
-  display_iterable(items, 5, display_activeIterable[SCREEN_SETTINGS], display_activeIterablePrevious[SCREEN_SETTINGS]);
+  display_wrapAlign(items[SCREEN_ITEM_SETTINGS_POWER], "POWER", powerValue, 15);
+  display_wrapAlign(items[SCREEN_ITEM_SETTINGS_TANK], "TANK", tankValue, 15);
+  display_wrapAlign(items[SCREEN_ITEM_SETTINGS_BACKLIGHT], "BACKLIGHT", backlightValue, 15);
+  display_wrapAlign(items[SCREEN_ITEM_SETTINGS_FAN_AT], "FAN AT", fanAtValue, 15);
+  display_wrapAlign(items[SCREEN_ITEM_SETTINGS_PUMP_AT], "PUMP AT", pumpAtValue, 15);
+  display_render_iterable_menu(items, 5, display_activeIterable[SCREEN_SETTINGS], display_activeIterablePrevious[SCREEN_SETTINGS]);
 }
 
-inline char* formatMinutes(int minutes) {
-  char result[5];
-  int h = minutes / 60;
-  int m = minutes % 60;
-
-  itoa(h, result, 10);
-  strcpy(result+strlen(result), ":");
-  if (m < 10) strcpy(result+strlen(result), "0");
-  itoa(m, result+strlen(result), 10);
-
-  return result;
-}
-
-inline char* display_program_print_item_oneline(byte itemIndex) {
-  char result[16] = "";
+inline void display_program_print_item_oneline(char *result, byte itemIndex) {
   char degree[1] = { char(223) };
 
   itoa(itemIndex + 1, result + strlen(result), 10);
@@ -127,18 +135,18 @@ inline char* display_program_print_item_oneline(byte itemIndex) {
 
   switch (brew_program[itemIndex][0]) {
     case PROGRAM_ITEM_MASH:
-      strcpy(result + strlen(result), formatMinutes(brew_program[itemIndex][1]));
+      display_format_minutes(result, brew_program[itemIndex][1]);
       strcpy(result + strlen(result), " AT ");
       itoa(brew_program[itemIndex][2], result + strlen(result), 10);
       strncpy(result + strlen(result), degree, 1);
       break;
     case PROGRAM_ITEM_BOILING:
       strcpy(result + strlen(result), "BOIL ");
-      strcpy(result + strlen(result), formatMinutes(brew_program[itemIndex][1]));
+      display_format_minutes(result, brew_program[itemIndex][1]);
       break;
     case PROGRAM_ITEM_REMINDER_TIME:
       strcpy(result + strlen(result), "ALARM +");
-      strcpy(result + strlen(result), formatMinutes(brew_program[itemIndex][1]));
+      display_format_minutes(result, brew_program[itemIndex][1]);
       break;
     case PROGRAM_ITEM_REMINDER_TEMP:
       strcpy(result + strlen(result), "ALARM ");
@@ -146,22 +154,20 @@ inline char* display_program_print_item_oneline(byte itemIndex) {
       strncpy(result + strlen(result), degree, 1);
       break;
   }
-  return result;
 }
 
-void inline display_program() {
+inline void display_program() {
   char items[PROGRAM_ITEMS_MAX_COUNT + 1][16];
-  char* menu;
 
   for (byte i = 0; i < brew_programLength; i++) {
-    char* item = display_program_print_item_oneline(i);
-    strcpy(items[i], item);
+    items[i][0] = '\0';
+    display_program_print_item_oneline(items[i], i);
   }
   strcpy(items[brew_programLength], "ADD NEW STEP");
-  display_iterable(items, brew_programLength + 1, display_activeIterable[SCREEN_PROGRAM], display_activeIterablePrevious[SCREEN_PROGRAM]);
+  display_render_iterable_menu(items, brew_programLength + 1, display_activeIterable[SCREEN_PROGRAM], display_activeIterablePrevious[SCREEN_PROGRAM]);
 }
 
-void inline display_program_edit() {
+inline void display_program_edit() {
   byte counter;
   char items[5][16];
   char degree[1] = { DEGREE_SYMBOL };
@@ -188,7 +194,7 @@ void inline display_program_edit() {
       
       display_secondLine[0] = display_activeIterable[SCREEN_PROGRAM_EDIT] == 1 ? POINTER_SYMBOL : ' ';
       display_secondLine[1] = '\0';
-      strcpy(display_secondLine + strlen(display_secondLine), formatMinutes(display_programEdit_B));
+      display_format_minutes(display_secondLine, display_programEdit_B);
       strcpy(display_secondLine + strlen(display_secondLine), " AT ");
     
       counter = strlen(display_secondLine);
@@ -207,7 +213,7 @@ void inline display_program_edit() {
 
       display_secondLine[0] = display_activeIterable[SCREEN_PROGRAM_EDIT] == 1 ? POINTER_SYMBOL : ' ';
       display_secondLine[1] = '\0';
-      strcpy(display_secondLine + strlen(display_secondLine), formatMinutes(display_programEdit_B));
+      display_format_minutes(display_secondLine, display_programEdit_B);
       strcpy(display_secondLine + strlen(display_secondLine), " AT 100");
       counter = strlen(display_secondLine);
       display_secondLine[counter] = DEGREE_SYMBOL;
@@ -222,7 +228,7 @@ void inline display_program_edit() {
       counter = strlen(display_secondLine);
       display_secondLine[counter] = display_activeIterable[SCREEN_PROGRAM_EDIT] == 1 ? POINTER_SYMBOL : ' ';
       display_secondLine[++counter] = '\0';
-      strcpy(display_secondLine + strlen(display_secondLine), formatMinutes(display_programEdit_B));
+      display_format_minutes(display_secondLine, display_programEdit_B);
       break;
       
     case PROGRAM_ITEM_REMINDER_TEMP:
@@ -241,11 +247,11 @@ void inline display_program_edit() {
   }
 }
 
-void inline display_render() {
+inline void display_render() {
   switch (display_screenCurrent) {
-    case SCREEN_DASHBOARD:    display_dashboard();    break;
-    case SCREEN_MAIN:         display_main();         break;
-    case SCREEN_SETTINGS:     display_settings();     break;
+    case SCREEN_DASHBOARD:    display_render_dashboard();    break;
+    case SCREEN_MAIN:         display_render_main();         break;
+    case SCREEN_SETTINGS:     display_render_settings();     break;
     case SCREEN_PROGRAM:      display_program();      break;
     case SCREEN_PROGRAM_EDIT: display_program_edit(); break;
   }
@@ -255,14 +261,12 @@ void inline display_render() {
   lcd.print(display_secondLine);
 }
 
-void inline display_changeScreen(byte screen) {
+inline void display_changeScreen(byte screen) {
   display_screenCurrent = screen; 
   display_render();
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void inline display_dashboard_listeners() {
+inline void display_dashboard_listeners() {
   if (keyboard_escapePressed && keyboard_shortPress) {
     buzzer_buttonShort();
     keyboard_releaseKeys();
@@ -284,7 +288,7 @@ void inline display_dashboard_listeners() {
   }
 }
 
-void inline display_main_listeners() {
+inline void display_main_listeners() {
   if (keyboard_escapePressed && keyboard_shortPress) {
     buzzer_buttonShort();
     keyboard_releaseKeys();
@@ -311,24 +315,57 @@ void inline display_main_listeners() {
   }
 }
 
-void inline display_settings_listeners() {  
-  if (keyboard_escapePressed && keyboard_shortPress) {
-    buzzer_buttonShort();
+inline void display_settings_listeners() {  
+  if ((keyboard_escapePressed || keyboard_enterPressed) && keyboard_shortPress) {
+    buzzer_saved();
+    store_save_settings();
     keyboard_releaseKeys();
     display_changeScreen(SCREEN_MAIN);
   }
   else if ((keyboard_upPressed || keyboard_downPressed) && keyboard_shortPress) {
     display_activeIterablePrevious[SCREEN_SETTINGS] = display_activeIterable[SCREEN_SETTINGS];
     keyboard_downPressed ? display_activeIterable[SCREEN_SETTINGS]++ : display_activeIterable[SCREEN_SETTINGS]--;
+    // TODO: refactor; change underzero state behaviour to pre-set validation
     if (display_activeIterable[SCREEN_SETTINGS] >= display_iterableCount) { display_activeIterable[SCREEN_SETTINGS] = 0; }
     else if (display_activeIterable[SCREEN_SETTINGS] < 0) { display_activeIterable[SCREEN_SETTINGS] = display_iterableCount - 1; }
     buzzer_buttonShort();
     keyboard_releaseKeys();
     display_changeScreen(SCREEN_SETTINGS);
   }
+  else if ((keyboard_leftPressed || keyboard_rightPressed) && keyboard_shortPress) {
+    switch (display_activeIterable[SCREEN_SETTINGS]) {
+      case SCREEN_ITEM_SETTINGS_POWER:
+        if      (keyboard_leftPressed  && setting_heaterPower > 1)  setting_heaterPower--;
+        else if (keyboard_rightPressed && setting_heaterPower < 50) setting_heaterPower++;
+        // TODO: else error beep
+        break;
+      case SCREEN_ITEM_SETTINGS_TANK:
+        if      (keyboard_leftPressed  && setting_tankVolume > 1)  setting_tankVolume--;
+        else if (keyboard_rightPressed && setting_tankVolume < 80) setting_tankVolume++;
+        // TODO: else error beep
+        break;
+      case SCREEN_ITEM_SETTINGS_BACKLIGHT:
+        if      (keyboard_leftPressed  && setting_backlightLevel > 0)   setting_backlightLevel = setting_backlightLevel - 5;
+        else if (keyboard_rightPressed && setting_backlightLevel < 100) setting_backlightLevel = setting_backlightLevel + 5;
+        // TODO: else error beep
+        break;
+      case SCREEN_ITEM_SETTINGS_FAN_AT:
+        if      (keyboard_leftPressed  && setting_fanTemp > 20) setting_fanTemp = setting_fanTemp - 5;
+        else if (keyboard_rightPressed && setting_fanTemp < 80) setting_fanTemp = setting_fanTemp + 5;
+        // TODO: else error beep
+        break;
+      case SCREEN_ITEM_SETTINGS_PUMP_AT:
+        if      (keyboard_leftPressed  && setting_pumpTempDelta > 1)  setting_pumpTempDelta--;
+        else if (keyboard_rightPressed && setting_pumpTempDelta < 50) setting_pumpTempDelta++;
+        // TODO: else error beep
+        break;
+    }
+    keyboard_releaseKeys();
+    display_changeScreen(SCREEN_SETTINGS);
+  }
 }
 
-void inline display_program_listeners() {
+inline void display_program_listeners() {
   if (keyboard_escapePressed && keyboard_shortPress) {
     buzzer_buttonShort();
     keyboard_releaseKeys();
@@ -385,7 +422,7 @@ void inline display_program_listeners() {
   }
 }
 
-void inline display_program_edit_listeners() {
+inline void display_program_edit_listeners() {
   if (keyboard_escapePressed && keyboard_shortPress) {
     buzzer_buttonShort();
     keyboard_releaseKeys();
@@ -400,6 +437,7 @@ void inline display_program_edit_listeners() {
     display_changeScreen(SCREEN_PROGRAM_EDIT);
   }
   else if ((keyboard_leftPressed || keyboard_rightPressed) && keyboard_shortPress) {
+    // TODO: replace to switch()
     if (display_activeIterable[SCREEN_PROGRAM_EDIT] == 0) {
       keyboard_leftPressed ? display_programEdit_A-- : display_programEdit_A++;
       if (display_programEdit_A < 0) display_programEdit_A = 4 - 1;
@@ -476,7 +514,7 @@ void inline display_program_edit_listeners() {
   }
 }
 
-void inline display_loop(unsigned long now) {
+inline void display_loop(unsigned long now) {
   if (now - lastRun_loopDisplay < LOOP_THRESHOLD_DISPLAY) return;
   lastRun_loopDisplay = now;
 

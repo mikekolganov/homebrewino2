@@ -1,7 +1,7 @@
 #include "constants.h"
 #include "variables.h"
 
-void inline keyboard_releaseKeys() {
+inline void keyboard_releaseKeys() {
   keyboard_upPressed     = false;
   keyboard_downPressed   = false;
   keyboard_leftPressed   = false;
@@ -14,7 +14,7 @@ void inline keyboard_releaseKeys() {
   keyboard_holdPress = false;
 }
 
-void inline keyboard_event(byte key, byte eventType) {
+inline void keyboard_event(byte key, byte eventType) {
   keyboard_releaseKeys();
   switch (key) {
     case BUTTON_UP:     keyboard_upPressed     = true; break;
@@ -33,15 +33,16 @@ void inline keyboard_event(byte key, byte eventType) {
 }
 
 word keypad;
+word escape;
 
 byte inline keyboard_getPressedKey() {
-  word escape = analogRead(PIN_BUTTON_ESCAPE);
-  if (0 <= escape && escape < 30) {
+  escape = analogRead(PIN_BUTTON_ESCAPE);
+  keypad = analogRead(PIN_BUTTON_KEYS);
+
+  if (0 <= escape && escape < 30 && keypad > 900) {
     return BUTTON_ESCAPE;
   }
-
-  keypad = analogRead(PIN_BUTTON_KEYS);
-  if (130 < keypad && keypad < 200) { 
+  else if (130 < keypad && keypad < 200) { 
     return BUTTON_UP; 
   }
   else if (300 < keypad && keypad < 390) { 
@@ -61,7 +62,7 @@ byte inline keyboard_getPressedKey() {
   }
 }
 
-void inline keyboard_loop(unsigned long now) {
+inline void keyboard_loop(unsigned long now) {
   if (now - lastRun_loopKeyboard < LOOP_THRESHOLD_KEYBOARD) return;
   lastRun_loopKeyboard = now;
 
