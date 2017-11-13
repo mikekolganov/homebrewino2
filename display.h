@@ -26,7 +26,7 @@ inline void display_format_minutes(char *result, int minutes) {
   itoa(m, result + strlen(result), 10);
 }
 
-inline void display_render_iterable_menu(char items[][16], byte count, byte activeItem, byte prevActiveItem) {
+inline void display_render_iterable_menu(char items[][17], byte count, byte activeItem, byte prevActiveItem) {
   display_iterableCount = count;
 
   if (count == 1) {
@@ -90,7 +90,7 @@ inline void display_render_dashboard() {
 }
 
 inline void display_render_main() {
-  char items[2][16];
+  char items[2][17];
   strcpy(items[SCREEN_ITEM_MAIN_PROGRAM], "PROGRAM");
   strcpy(items[SCREEN_ITEM_MAIN_SETTINGS], "SETTINGS");
   display_render_iterable_menu(items, 2, display_activeIterable[SCREEN_MAIN], display_activeIterablePrevious[SCREEN_MAIN]);
@@ -118,7 +118,7 @@ inline void display_render_settings() {
   dtostrf(setting_pumpTempDelta * PUMP_TEMP_DELTA_MULTIPLIER, 3, 1, pumpAtValue + strlen(pumpAtValue));
   strcpy(pumpAtValue + strlen(pumpAtValue), degreeSymbol);
 
-  char items[5][16];
+  char items[5][17];
   display_wrapAlign(items[SCREEN_ITEM_SETTINGS_POWER], "POWER", powerValue, 15);
   display_wrapAlign(items[SCREEN_ITEM_SETTINGS_TANK], "TANK", tankValue, 15);
   display_wrapAlign(items[SCREEN_ITEM_SETTINGS_BACKLIGHT], "BACKLIGHT", backlightValue, 15);
@@ -128,8 +128,6 @@ inline void display_render_settings() {
 }
 
 inline void display_program_print_item_oneline(char *result, byte itemIndex) {
-  char degree[1] = { char(223) };
-
   itoa(itemIndex + 1, result + strlen(result), 10);
   strcpy(result + strlen(result), " ");
 
@@ -138,7 +136,7 @@ inline void display_program_print_item_oneline(char *result, byte itemIndex) {
       display_format_minutes(result, brew_program[itemIndex][1]);
       strcpy(result + strlen(result), " AT ");
       itoa(brew_program[itemIndex][2], result + strlen(result), 10);
-      strncpy(result + strlen(result), degree, 1);
+      strcpy(result + strlen(result), degreeSymbol);
       break;
     case PROGRAM_ITEM_BOILING:
       strcpy(result + strlen(result), "BOIL ");
@@ -151,13 +149,13 @@ inline void display_program_print_item_oneline(char *result, byte itemIndex) {
     case PROGRAM_ITEM_REMINDER_TEMP:
       strcpy(result + strlen(result), "ALARM ");
       itoa(brew_program[itemIndex][1], result + strlen(result), 10);
-      strncpy(result + strlen(result), degree, 1);
+      strcpy(result + strlen(result), degreeSymbol);
       break;
   }
 }
 
 inline void display_program() {
-  char items[PROGRAM_ITEMS_MAX_COUNT + 1][16];
+  char items[PROGRAM_ITEMS_MAX_COUNT + 1][17];
 
   for (byte i = 0; i < brew_programLength; i++) {
     items[i][0] = '\0';
@@ -168,9 +166,7 @@ inline void display_program() {
 }
 
 inline void display_program_edit() {
-  byte counter;
-  char items[5][16];
-  char degree[1] = { DEGREE_SYMBOL };
+  char items[5][17];
 
   bool existing = brew_programLength >= (display_programEditItem + 1);
   
@@ -183,66 +179,44 @@ inline void display_program_edit() {
     strcpy(display_firstLine, "ADD: ");
   }
 
-  counter = strlen(display_firstLine);
-  display_firstLine[counter] = display_activeIterable[SCREEN_PROGRAM_EDIT] == 0 ? POINTER_SYMBOL : ' ';
-  display_firstLine[++counter] = '\0';
+  strcpy(display_firstLine + strlen(display_firstLine), display_activeIterable[SCREEN_PROGRAM_EDIT] == 0 ? pointerSymbol : " ");
 
   switch (display_programEdit_A) {
     case PROGRAM_ITEM_MASH:
       display_iterableCount = 3;
       strcpy(display_firstLine + strlen(display_firstLine), "MASH");
-      
-      display_secondLine[0] = display_activeIterable[SCREEN_PROGRAM_EDIT] == 1 ? POINTER_SYMBOL : ' ';
-      display_secondLine[1] = '\0';
+      strcpy(display_secondLine, display_activeIterable[SCREEN_PROGRAM_EDIT] == 1 ? pointerSymbol : " ");
       display_format_minutes(display_secondLine, display_programEdit_B);
       strcpy(display_secondLine + strlen(display_secondLine), " AT ");
-    
-      counter = strlen(display_secondLine);
-      display_secondLine[counter] = display_activeIterable[SCREEN_PROGRAM_EDIT] == 2 ? POINTER_SYMBOL : ' ';
-      display_secondLine[++counter] = '\0';
+      strcpy(display_secondLine + strlen(display_secondLine), display_activeIterable[SCREEN_PROGRAM_EDIT] == 2 ? pointerSymbol : " ");
       itoa(display_programEdit_C, display_secondLine + strlen(display_secondLine), 10);
-    
-      counter = strlen(display_secondLine);
-      display_secondLine[counter] = DEGREE_SYMBOL;
-      display_secondLine[++counter] = '\0';
+      strcpy(display_secondLine + strlen(display_secondLine), degreeSymbol);
       break;
       
     case PROGRAM_ITEM_BOILING:
       display_iterableCount = 2;
       strcpy(display_firstLine + strlen(display_firstLine), "BOIL");
-
-      display_secondLine[0] = display_activeIterable[SCREEN_PROGRAM_EDIT] == 1 ? POINTER_SYMBOL : ' ';
-      display_secondLine[1] = '\0';
+      strcpy(display_secondLine, display_activeIterable[SCREEN_PROGRAM_EDIT] == 1 ? pointerSymbol : " ");
       display_format_minutes(display_secondLine, display_programEdit_B);
       strcpy(display_secondLine + strlen(display_secondLine), " AT 100");
-      counter = strlen(display_secondLine);
-      display_secondLine[counter] = DEGREE_SYMBOL;
-      display_secondLine[++counter] = '\0';
+      strcpy(display_secondLine + strlen(display_secondLine), degreeSymbol);
       break;
 
     case PROGRAM_ITEM_REMINDER_TIME:
       display_iterableCount = 2;
       strcpy(display_firstLine + strlen(display_firstLine), "ALARM");
-
       strcpy(display_secondLine, "AFTER ");
-      counter = strlen(display_secondLine);
-      display_secondLine[counter] = display_activeIterable[SCREEN_PROGRAM_EDIT] == 1 ? POINTER_SYMBOL : ' ';
-      display_secondLine[++counter] = '\0';
+      strcpy(display_secondLine + strlen(display_secondLine), display_activeIterable[SCREEN_PROGRAM_EDIT] == 1 ? pointerSymbol : " ");
       display_format_minutes(display_secondLine, display_programEdit_B);
       break;
       
     case PROGRAM_ITEM_REMINDER_TEMP:
       display_iterableCount = 2;
       strcpy(display_firstLine + strlen(display_firstLine), "ALARM");
-
       strcpy(display_secondLine, "ON ");
-      counter = strlen(display_secondLine);
-      display_secondLine[counter] = display_activeIterable[SCREEN_PROGRAM_EDIT] == 1 ? POINTER_SYMBOL : ' ';
-      display_secondLine[++counter] = '\0';
+      strcpy(display_secondLine + strlen(display_secondLine), display_activeIterable[SCREEN_PROGRAM_EDIT] == 1 ? pointerSymbol : " ");
       itoa(display_programEdit_B, display_secondLine + strlen(display_secondLine), 10);
-      counter = strlen(display_secondLine);
-      display_secondLine[counter] = DEGREE_SYMBOL;
-      display_secondLine[++counter] = '\0';
+      strcpy(display_secondLine + strlen(display_secondLine), degreeSymbol);
       break;
   }
 }
@@ -281,7 +255,8 @@ inline void display_dashboard_listeners() {
     keyboard_releaseKeys();
   }
   else if (keyboard_leftPressed && keyboard_shortPress) {
-
+    buzzer_error();
+    keyboard_releaseKeys();
   }
   else if (keyboard_rightPressed && keyboard_shortPress) {
 
@@ -317,8 +292,8 @@ inline void display_main_listeners() {
 
 inline void display_settings_listeners() {  
   if ((keyboard_escapePressed || keyboard_enterPressed) && keyboard_shortPress) {
+    event_settingsChanged = true;
     buzzer_saved();
-    store_save_settings();
     keyboard_releaseKeys();
     display_changeScreen(SCREEN_MAIN);
   }
@@ -337,27 +312,28 @@ inline void display_settings_listeners() {
       case SCREEN_ITEM_SETTINGS_POWER:
         if      (keyboard_leftPressed  && setting_heaterPower > 1)  setting_heaterPower--;
         else if (keyboard_rightPressed && setting_heaterPower < 50) setting_heaterPower++;
-        // TODO: else error beep
+        else buzzer_error();
         break;
       case SCREEN_ITEM_SETTINGS_TANK:
         if      (keyboard_leftPressed  && setting_tankVolume > 1)  setting_tankVolume--;
         else if (keyboard_rightPressed && setting_tankVolume < 80) setting_tankVolume++;
-        // TODO: else error beep
+        else buzzer_error();
         break;
       case SCREEN_ITEM_SETTINGS_BACKLIGHT:
         if      (keyboard_leftPressed  && setting_backlightLevel > 0)   setting_backlightLevel = setting_backlightLevel - 5;
         else if (keyboard_rightPressed && setting_backlightLevel < 100) setting_backlightLevel = setting_backlightLevel + 5;
-        // TODO: else error beep
+        else buzzer_error();
+        analogWrite(PIN_DISPLAY_BACKLIGHT, round(255 / 100 * setting_backlightLevel));
         break;
       case SCREEN_ITEM_SETTINGS_FAN_AT:
         if      (keyboard_leftPressed  && setting_fanTemp > 20) setting_fanTemp = setting_fanTemp - 5;
         else if (keyboard_rightPressed && setting_fanTemp < 80) setting_fanTemp = setting_fanTemp + 5;
-        // TODO: else error beep
+        else buzzer_error();
         break;
       case SCREEN_ITEM_SETTINGS_PUMP_AT:
         if      (keyboard_leftPressed  && setting_pumpTempDelta > 1)  setting_pumpTempDelta--;
         else if (keyboard_rightPressed && setting_pumpTempDelta < 50) setting_pumpTempDelta++;
-        // TODO: else error beep
+        else buzzer_error();
         break;
     }
     keyboard_releaseKeys();
@@ -398,6 +374,7 @@ inline void display_program_listeners() {
       display_activeIterable[SCREEN_PROGRAM] = moveToIndex;
       display_activeIterablePrevious[SCREEN_PROGRAM] = currentIndex;
 
+      event_programChanged = true;
       buzzer_saved();
       keyboard_releaseKeys();
       display_changeScreen(SCREEN_PROGRAM);
@@ -487,6 +464,7 @@ inline void display_program_edit_listeners() {
       brew_programLength++;
     }
 
+    event_programChanged = true;
     buzzer_saved();
     keyboard_releaseKeys();
     display_changeScreen(SCREEN_PROGRAM);
@@ -507,6 +485,8 @@ inline void display_program_edit_listeners() {
       brew_program[brew_programLength - 1][1] = 0;
       brew_program[brew_programLength - 1][2] = 0;
       brew_programLength--;
+
+      event_programChanged = true;
       buzzer_deleted();
       keyboard_releaseKeys();
       display_changeScreen(SCREEN_PROGRAM);

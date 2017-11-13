@@ -24,6 +24,7 @@ LiquidCrystal lcd(PIN_DISPLAY_1, PIN_DISPLAY_2, PIN_DISPLAY_3, PIN_DISPLAY_4, PI
 void setup() {
   Serial.begin(9600);
   lcd.createChar(1, DELTA_SYMBOL_1);
+  lcd.createChar(2, LOCK_SYMBOL_2);
   lcd.begin(16, 2);
   pinMode(PIN_RELAY_HEATER, OUTPUT);
   pinMode(PIN_RELAY_FAN, OUTPUT);

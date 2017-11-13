@@ -13,8 +13,36 @@ word adress_setting_backlightLevel = EEPROM.getAddress(sizeof(byte));
 word adress_setting_fanTemp        = EEPROM.getAddress(sizeof(byte));
 word adress_setting_pumpTempDelta  = EEPROM.getAddress(sizeof(byte));
 
+inline void store_save_program() {
+  EEPROM.writeByte(address_brew_programLength, brew_programLength);
+  word cellAddress = address_brew_program;
+  for (byte i = 0; i < sizeof(brew_program) / sizeof(brew_program[0]); i++) {
+    for (byte j = 0; j < sizeof(brew_program[0]) / sizeof(brew_program[0][0]); j++) {
+      EEPROM.writeInt(cellAddress, brew_program[i][j]);
+      cellAddress += sizeof(brew_program[0][0]);
+    }
+  }
+}
+
+inline void store_read_program() {
+  brew_programLength = EEPROM.readByte(address_brew_programLength);
+  word cellAddress = address_brew_program;
+  for (byte i = 0; i < sizeof(brew_program) / sizeof(brew_program[0]); i++) {
+    for (byte j = 0; j < sizeof(brew_program[0]) / sizeof(brew_program[0][0]); j++) {
+      brew_program[i][j] = EEPROM.readInt(cellAddress);
+      cellAddress += sizeof(brew_program[0][0]);
+    }
+  }
+}
+
 inline void store_save_brewing_state() {
-  
+  EEPROM.writeByte(address_brew_status, brew_status);
+  EEPROM.writeLong(address_brew_timeProcessed, brew_timeProcessed);
+}
+
+inline void store_read_brewing_state() {
+  brew_status = EEPROM.readByte(address_brew_status);
+  brew_timeProcessed = EEPROM.readLong(address_brew_timeProcessed);
 }
 
 inline void store_save_settings() {
@@ -41,9 +69,21 @@ inline void store_read_settings() {
 
 inline void store_setup() {
   store_read_settings();
+  store_read_program();
+  store_read_brewing_state();
 }
 
 inline void store_loop(unsigned long now) {
   if (now - lastRun_loopStore < LOOP_THRESHOLD_STORE) return;
   lastRun_loopStore = now;
+
+  if (event_settingsChanged) {
+    store_save_settings();
+    event_settingsChanged = false;
+  }
+
+  if (event_programChanged) {
+    store_save_program();
+    event_programChanged = false;
+  }
 }

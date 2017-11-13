@@ -2,6 +2,7 @@
 #define VARIABLES_H
 
 #include "constants.h"
+#include "symbols.h"
 
 unsigned long lastRun_loopBrew     = 0;
 unsigned long lastRun_loopBuzzer   = 0;
@@ -11,6 +12,9 @@ unsigned long lastRun_loopPump     = 0;
 unsigned long lastRun_loopDisplay  = 0;
 unsigned long lastRun_loopSensors  = 0;
 unsigned long lastRun_loopStore    = 0;
+
+bool event_settingsChanged = false;
+bool event_programChanged = false;
 
 float sensor_brewing1 = 0;
 float sensor_brewing2 = 0;
@@ -55,7 +59,7 @@ byte setting_fanTemp;
 byte setting_pumpTempDelta;
 
 byte brew_status;
-word brew_timeProcessed;
+unsigned long brew_timeProcessed;
 byte brew_programLength = 0;
 int  brew_program[PROGRAM_ITEMS_MAX_COUNT][3];
 
@@ -66,26 +70,16 @@ bool pump_relayEnabled   = false;
 byte fan_relayMode       = RELAY_MODE_AUTO;
 bool fan_relayEnabled    = false;
 
-byte DELTA_SYMBOL_1[8] = {
-	0b00000,
-	0b00000,
-	0b00100,
-	0b01010,
-	0b10001,
-	0b11111,
-	0b00000,
-	0b00000
-};
+int buzzer_sequence[20];
+byte buzzer_sequenceIndex = 0;
+byte buzzer_sequenceLength = 0;
+unsigned long buzzer_nextToneTime = 0;
 
 const char POINTER_SYMBOL = char(165);
 const char DEGREE_SYMBOL  = char(223);
 char pointerSymbol[2] = { POINTER_SYMBOL, '\0' };
 char degreeSymbol[2] = { DEGREE_SYMBOL, '\0' };
 char deltaSymbol[2] = { 1, '\0' };
-
-int buzzer_sequence[20];
-byte buzzer_sequenceIndex = 0;
-byte buzzer_sequenceLength = 0;
-unsigned long buzzer_nextToneTime = 0;
+char lockSymbol[2] = { 2, '\0'};
 
 #endif

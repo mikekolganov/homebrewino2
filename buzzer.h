@@ -26,7 +26,7 @@ inline void buzzer_reset() {
 inline void buzzer_buttonShort() {
   buzzer_reset();
   buzzer_sequenceLength = 1;
-  buzzer_sequence[0] = 1760;
+  buzzer_sequence[0] = 2093;
   buzzer_sequence[1] = 20;
 }
 
@@ -53,5 +53,18 @@ inline void buzzer_deleted() {
 }
 
 inline void buzzer_error() {
-
+  buzzer_reset();
+  buzzer_sequenceLength = 6;
+  buzzer_sequence[0] = 1760;
+  buzzer_sequence[1] = 30;
+  buzzer_sequence[2] = 0;
+  buzzer_sequence[3] = 30;
+  buzzer_sequence[4] = 1760;
+  buzzer_sequence[5] = 30;
+  buzzer_sequence[6] = 0;
+  buzzer_sequence[7] = 30;
+  buzzer_sequence[8] = 1760;
+  buzzer_sequence[9] = 30;
+  buzzer_sequence[10] = 0;
+  buzzer_sequence[11] = 30;
 }
