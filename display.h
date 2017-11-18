@@ -642,6 +642,8 @@ inline void display_brew_control_listeners() {
   else if (keyboard_enterPressed && keyboard_shortPress) {
     switch (display_activeIterable[SCREEN_BREW_CONTROL]) {
       case SCREEN_ITEM_BREW_CONTROL_PLAY_PAUSE:
+        heater_relayMode = RELAY_MODE_AUTO;
+        pump_relayMode   = RELAY_MODE_AUTO;
         if (brew_status == BREW_STATUS_IDLE || brew_status == BREW_STATUS_PAUSED) {
           brew_status = BREW_STATUS_WORKING;
         }
