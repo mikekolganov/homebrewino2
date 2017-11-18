@@ -450,7 +450,7 @@ inline void display_settings_listeners() {
     switch (display_activeIterable[SCREEN_SETTINGS]) {
       case SCREEN_ITEM_SETTINGS_POWER:
         if      (keyboard_leftPressed  && setting_heaterPower > 1)  setting_heaterPower--;
-        else if (keyboard_rightPressed && setting_heaterPower < 50) setting_heaterPower++;
+        else if (keyboard_rightPressed && setting_heaterPower < 44) setting_heaterPower++;
         else buzzer_error();
         break;
       case SCREEN_ITEM_SETTINGS_TANK:
