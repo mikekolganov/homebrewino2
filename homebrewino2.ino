@@ -25,14 +25,20 @@ void setup() {
   Serial.begin(9600);
   lcd.createChar(1, DELTA_SYMBOL_1);
   lcd.createChar(2, LOCK_SYMBOL_2);
+  lcd.createChar(3, PLAY_SYMBOL_3);
+  lcd.createChar(4, PAUSE_SYMBOL_4);
+  lcd.createChar(5, STOP_SYMBOL_5);
   lcd.begin(16, 2);
   pinMode(PIN_RELAY_HEATER, OUTPUT);
   pinMode(PIN_RELAY_FAN, OUTPUT);
+  pinMode(PIN_RELAY_PUMP, OUTPUT);
   digitalWrite(PIN_RELAY_FAN, HIGH);
+  digitalWrite(PIN_RELAY_PUMP, HIGH);
   EEPROM.setMemPool(0, EEPROMSizeUno);
   EEPROM.setMaxAllowedWrites(2000);
   store_setup();
   analogWrite(PIN_DISPLAY_BACKLIGHT, round(255 / 100 * setting_backlightLevel));
+  sensors_loop(millis());
 }
 
 void loop() {

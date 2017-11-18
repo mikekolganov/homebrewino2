@@ -73,27 +73,75 @@ inline void display_render_iterable_menu(char items[][17], byte count, byte acti
   }
 }
 
+inline void display_program_print_item_oneline(char *result, byte itemIndex) {
+  itoa(itemIndex + 1, result + strlen(result), 10);
+  strcpy(result + strlen(result), " ");
+
+  switch (brew_program[itemIndex][0]) {
+    case PROGRAM_ITEM_MASH:
+      display_format_minutes(result, brew_program[itemIndex][1]);
+      strcpy(result + strlen(result), " AT ");
+      itoa(brew_program[itemIndex][2], result + strlen(result), 10);
+      strcpy(result + strlen(result), degreeSymbol);
+      break;
+    case PROGRAM_ITEM_BOILING:
+      strcpy(result + strlen(result), "BOIL ");
+      display_format_minutes(result, brew_program[itemIndex][1]);
+      break;
+    case PROGRAM_ITEM_REMINDER_TIME:
+      strcpy(result + strlen(result), "ALARM +");
+      display_format_minutes(result, brew_program[itemIndex][1]);
+      break;
+    case PROGRAM_ITEM_REMINDER_TEMP:
+      strcpy(result + strlen(result), "ALARM ");
+      itoa(brew_program[itemIndex][1], result + strlen(result), 10);
+      strcpy(result + strlen(result), degreeSymbol);
+      break;
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 inline void display_render_dashboard() {
   unsigned long now = millis();
-  char brew_temp1[7];
-  char brew_temp2[7];
 
-  dtostrf(sensor_brewing1, 4, 1, brew_temp1);
-  dtostrf(sensor_brewing2, 4, 1, brew_temp2);
+  switch (brew_status) {
+    case BREW_STATUS_IDLE:
+    case BREW_STATUS_COMPLETED:
+      strcpy(display_firstLine, stopSymbol); break;
+    case BREW_STATUS_WORKING:
+      strcpy(display_firstLine, playSymbol); break;
+    case BREW_STATUS_PAUSED:
+      strcpy(display_firstLine, pauseSymbol); break;
+  }
 
-  strcpy(brew_temp1 + strlen(brew_temp1), degreeSymbol);
-  strcpy(brew_temp2 + strlen(brew_temp2), degreeSymbol);
-  sprintf(display_firstLine, "%s %s", brew_temp1, brew_temp2);
-  strcpy(display_secondLine, "                ");
+  if (sensor_brewing1 > 0 && sensor_brewing2 > 0) {
+    char brew_temp1[7];
+    char brew_temp2[7];
+    dtostrf(sensor_brewing1, 4, 1, brew_temp1);
+    dtostrf(sensor_brewing2, 4, 1, brew_temp2);
+    strcpy(brew_temp1 + strlen(brew_temp1), degreeSymbol);
+    strcpy(brew_temp2 + strlen(brew_temp2), degreeSymbol);
+    sprintf(display_firstLine + strlen(display_firstLine), " %s %s", brew_temp1, brew_temp2);
+  }
+  else {
+    strcpy(display_firstLine + strlen(display_firstLine), " NO SENSORS");
+  }
+
+  strcpy(display_secondLine, "");
 
   display_willChange = now + 500;
 }
 
 inline void display_render_main() {
-  char items[2][17];
-  strcpy(items[SCREEN_ITEM_MAIN_PROGRAM], "PROGRAM");
+  char items[6][17];
+  strcpy(items[SCREEN_ITEM_MAIN_PROGRAM],  "PROGRAM");
+  strcpy(items[SCREEN_ITEM_MAIN_BREWING],  "BREWING");
+  strcpy(items[SCREEN_ITEM_MAIN_HEATER],   "HEATER CONTROL");
+  strcpy(items[SCREEN_ITEM_MAIN_PUMP],     "PUMP CONTROL");
   strcpy(items[SCREEN_ITEM_MAIN_SETTINGS], "SETTINGS");
-  display_render_iterable_menu(items, 2, display_activeIterable[SCREEN_MAIN], display_activeIterablePrevious[SCREEN_MAIN]);
+  strcpy(items[SCREEN_ITEM_MAIN_CREDITS],  "CREDITS");
+  display_render_iterable_menu(items, 6, display_activeIterable[SCREEN_MAIN], display_activeIterablePrevious[SCREEN_MAIN]);
 }
 
 inline void display_render_settings() {
@@ -125,33 +173,6 @@ inline void display_render_settings() {
   display_wrapAlign(items[SCREEN_ITEM_SETTINGS_FAN_AT], "FAN AT", fanAtValue, 15);
   display_wrapAlign(items[SCREEN_ITEM_SETTINGS_PUMP_AT], "PUMP AT", pumpAtValue, 15);
   display_render_iterable_menu(items, 5, display_activeIterable[SCREEN_SETTINGS], display_activeIterablePrevious[SCREEN_SETTINGS]);
-}
-
-inline void display_program_print_item_oneline(char *result, byte itemIndex) {
-  itoa(itemIndex + 1, result + strlen(result), 10);
-  strcpy(result + strlen(result), " ");
-
-  switch (brew_program[itemIndex][0]) {
-    case PROGRAM_ITEM_MASH:
-      display_format_minutes(result, brew_program[itemIndex][1]);
-      strcpy(result + strlen(result), " AT ");
-      itoa(brew_program[itemIndex][2], result + strlen(result), 10);
-      strcpy(result + strlen(result), degreeSymbol);
-      break;
-    case PROGRAM_ITEM_BOILING:
-      strcpy(result + strlen(result), "BOIL ");
-      display_format_minutes(result, brew_program[itemIndex][1]);
-      break;
-    case PROGRAM_ITEM_REMINDER_TIME:
-      strcpy(result + strlen(result), "ALARM +");
-      display_format_minutes(result, brew_program[itemIndex][1]);
-      break;
-    case PROGRAM_ITEM_REMINDER_TEMP:
-      strcpy(result + strlen(result), "ALARM ");
-      itoa(brew_program[itemIndex][1], result + strlen(result), 10);
-      strcpy(result + strlen(result), degreeSymbol);
-      break;
-  }
 }
 
 inline void display_program() {
@@ -221,13 +242,45 @@ inline void display_program_edit() {
   }
 }
 
+inline void display_brew_control() {
+  char items[2][17];
+  strcpy(items[SCREEN_ITEM_BREW_CONTROL_PLAY_PAUSE], "START BREWING");
+  strcpy(items[SCREEN_ITEM_BREW_CONTROL_STOP], "STOP BREWING");
+  display_render_iterable_menu(items, 2, display_activeIterable[SCREEN_BREW_CONTROL], display_activeIterablePrevious[SCREEN_BREW_CONTROL]);
+}
+
+inline void display_heater_control() {
+  char items[2][17];
+  display_wrapAlign(items[SCREEN_ITEM_HEATER_CONTROL_MODE], "HEATER", "AUTO", 15);
+  display_wrapAlign(items[SCREEN_ITEM_HEATER_CONTROL_TOGGLE], "STATE", "OFF", 15);
+  display_render_iterable_menu(items, 2, display_activeIterable[SCREEN_HEATER_CONTROL], display_activeIterablePrevious[SCREEN_HEATER_CONTROL]);
+}
+
+inline void display_pump_control() {
+  char items[2][17];
+  display_wrapAlign(items[SCREEN_ITEM_PUMP_CONTROL_MODE], "PUMP", "AUTO", 15);
+  display_wrapAlign(items[SCREEN_ITEM_PUMP_CONTROL_TOGGLE], "STATE", "OFF", 15);
+  display_render_iterable_menu(items, 2, display_activeIterable[SCREEN_PUMP_CONTROL], display_activeIterablePrevious[SCREEN_PUMP_CONTROL]);
+}
+
+inline void display_credits() {
+  strcpy(display_firstLine, "DEVOTED TO");
+  strcpy(display_secondLine, "MIKE POMYTKIN");
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 inline void display_render() {
   switch (display_screenCurrent) {
-    case SCREEN_DASHBOARD:    display_render_dashboard();    break;
-    case SCREEN_MAIN:         display_render_main();         break;
-    case SCREEN_SETTINGS:     display_render_settings();     break;
-    case SCREEN_PROGRAM:      display_program();      break;
-    case SCREEN_PROGRAM_EDIT: display_program_edit(); break;
+    case SCREEN_DASHBOARD:      display_render_dashboard(); break;
+    case SCREEN_MAIN:           display_render_main();      break;
+    case SCREEN_SETTINGS:       display_render_settings();  break;
+    case SCREEN_PROGRAM:        display_program();          break;
+    case SCREEN_PROGRAM_EDIT:   display_program_edit();     break;
+    case SCREEN_BREW_CONTROL:   display_brew_control();     break;
+    case SCREEN_HEATER_CONTROL: display_heater_control();   break;
+    case SCREEN_PUMP_CONTROL:   display_pump_control();     break;
+    case SCREEN_CREDITS:        display_credits();          break;
   }
   lcd.clear();
   lcd.print(display_firstLine);
@@ -240,26 +293,39 @@ inline void display_changeScreen(byte screen) {
   display_render();
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 inline void display_dashboard_listeners() {
   if (keyboard_escapePressed && keyboard_shortPress) {
     buzzer_buttonShort();
     keyboard_releaseKeys();
     display_changeScreen(SCREEN_MAIN);
   }
-  else if (keyboard_upPressed && keyboard_shortPress) {
-    buzzer_saved();
+  else if (keyboard_enterPressed && keyboard_shortPress) {
+    buzzer_buttonShort();
     keyboard_releaseKeys();
+    display_screenBack = SCREEN_DASHBOARD;
+    display_changeScreen(SCREEN_BREW_CONTROL);
+  }
+  else if (keyboard_upPressed && keyboard_shortPress) {
+    buzzer_buttonShort();
+    keyboard_releaseKeys();
+    display_screenBack = SCREEN_DASHBOARD;
+    display_changeScreen(SCREEN_HEATER_CONTROL);
   }
   else if (keyboard_downPressed && keyboard_shortPress) {
-    buzzer_deleted();
+    buzzer_buttonShort();
     keyboard_releaseKeys();
+    display_screenBack = SCREEN_DASHBOARD;
+    display_changeScreen(SCREEN_PUMP_CONTROL);
   }
   else if (keyboard_leftPressed && keyboard_shortPress) {
-    buzzer_error();
+    buzzer_buttonShort();
     keyboard_releaseKeys();
   }
   else if (keyboard_rightPressed && keyboard_shortPress) {
-
+    buzzer_buttonShort();
+    keyboard_releaseKeys();
   }
 }
 
@@ -278,15 +344,38 @@ inline void display_main_listeners() {
     keyboard_releaseKeys();
     display_changeScreen(SCREEN_MAIN);
   }
+  else if (display_activeIterable[SCREEN_MAIN] == SCREEN_ITEM_MAIN_PROGRAM && keyboard_enterPressed && keyboard_shortPress) {
+    buzzer_buttonShort();
+    keyboard_releaseKeys();
+    display_changeScreen(SCREEN_PROGRAM);
+  }
+  else if (display_activeIterable[SCREEN_MAIN] == SCREEN_ITEM_MAIN_BREWING && keyboard_enterPressed && keyboard_shortPress) {
+    buzzer_buttonShort();
+    keyboard_releaseKeys();
+    display_screenBack = SCREEN_MAIN;
+    display_changeScreen(SCREEN_BREW_CONTROL);
+  }
+  else if (display_activeIterable[SCREEN_MAIN] == SCREEN_ITEM_MAIN_HEATER && keyboard_enterPressed && keyboard_shortPress) {
+    buzzer_buttonShort();
+    keyboard_releaseKeys();
+    display_screenBack = SCREEN_MAIN;
+    display_changeScreen(SCREEN_HEATER_CONTROL);
+  }
+  else if (display_activeIterable[SCREEN_MAIN] == SCREEN_ITEM_MAIN_PUMP && keyboard_enterPressed && keyboard_shortPress) {
+    buzzer_buttonShort();
+    keyboard_releaseKeys();
+    display_screenBack = SCREEN_MAIN;
+    display_changeScreen(SCREEN_PUMP_CONTROL);
+  }
   else if (display_activeIterable[SCREEN_MAIN] == SCREEN_ITEM_MAIN_SETTINGS && keyboard_enterPressed && keyboard_shortPress) {
     buzzer_buttonShort();
     keyboard_releaseKeys();
     display_changeScreen(SCREEN_SETTINGS);
   }
-  else if (display_activeIterable[SCREEN_MAIN] == SCREEN_ITEM_MAIN_PROGRAM && keyboard_enterPressed && keyboard_shortPress) {
+  else if (display_activeIterable[SCREEN_MAIN] == SCREEN_ITEM_MAIN_CREDITS && keyboard_enterPressed && keyboard_shortPress) {
     buzzer_buttonShort();
     keyboard_releaseKeys();
-    display_changeScreen(SCREEN_PROGRAM);
+    display_changeScreen(SCREEN_CREDITS);
   }
 }
 
@@ -494,16 +583,81 @@ inline void display_program_edit_listeners() {
   }
 }
 
+inline void display_brew_control_listeners() {
+  if (keyboard_escapePressed && keyboard_shortPress) {
+    buzzer_buttonShort();
+    keyboard_releaseKeys();
+    display_changeScreen(display_screenBack);
+  }
+  else if ((keyboard_upPressed || keyboard_downPressed) && keyboard_shortPress) {
+    display_activeIterablePrevious[SCREEN_BREW_CONTROL] = display_activeIterable[SCREEN_BREW_CONTROL];
+    keyboard_downPressed ? display_activeIterable[SCREEN_BREW_CONTROL]++ : display_activeIterable[SCREEN_BREW_CONTROL]--;
+    // TODO: refactor; change underzero state behaviour to pre-set validation
+    if (display_activeIterable[SCREEN_BREW_CONTROL] >= display_iterableCount) { display_activeIterable[SCREEN_BREW_CONTROL] = 0; }
+    else if (display_activeIterable[SCREEN_BREW_CONTROL] < 0) { display_activeIterable[SCREEN_BREW_CONTROL] = display_iterableCount - 1; }
+    buzzer_buttonShort();
+    keyboard_releaseKeys();
+    display_changeScreen(SCREEN_BREW_CONTROL);
+  }
+}
+
+inline void display_heater_control_listeners() {
+  if (keyboard_escapePressed && keyboard_shortPress) {
+    buzzer_buttonShort();
+    keyboard_releaseKeys();
+    display_changeScreen(display_screenBack);
+  }
+  else if ((keyboard_upPressed || keyboard_downPressed) && keyboard_shortPress) {
+    display_activeIterablePrevious[SCREEN_HEATER_CONTROL] = display_activeIterable[SCREEN_HEATER_CONTROL];
+    keyboard_downPressed ? display_activeIterable[SCREEN_HEATER_CONTROL]++ : display_activeIterable[SCREEN_HEATER_CONTROL]--;
+    // TODO: refactor; change underzero state behaviour to pre-set validation
+    if (display_activeIterable[SCREEN_HEATER_CONTROL] >= display_iterableCount) { display_activeIterable[SCREEN_HEATER_CONTROL] = 0; }
+    else if (display_activeIterable[SCREEN_HEATER_CONTROL] < 0) { display_activeIterable[SCREEN_HEATER_CONTROL] = display_iterableCount - 1; }
+    buzzer_buttonShort();
+    keyboard_releaseKeys();
+    display_changeScreen(SCREEN_HEATER_CONTROL);
+  }
+}
+
+inline void display_pump_control_listeners() {
+  if (keyboard_escapePressed && keyboard_shortPress) {
+    buzzer_buttonShort();
+    keyboard_releaseKeys();
+    display_changeScreen(display_screenBack);
+  }
+  else if ((keyboard_upPressed || keyboard_downPressed) && keyboard_shortPress) {
+    display_activeIterablePrevious[SCREEN_PUMP_CONTROL] = display_activeIterable[SCREEN_PUMP_CONTROL];
+    keyboard_downPressed ? display_activeIterable[SCREEN_PUMP_CONTROL]++ : display_activeIterable[SCREEN_PUMP_CONTROL]--;
+    // TODO: refactor; change underzero state behaviour to pre-set validation
+    if (display_activeIterable[SCREEN_PUMP_CONTROL] >= display_iterableCount) { display_activeIterable[SCREEN_PUMP_CONTROL] = 0; }
+    else if (display_activeIterable[SCREEN_PUMP_CONTROL] < 0) { display_activeIterable[SCREEN_PUMP_CONTROL] = display_iterableCount - 1; }
+    buzzer_buttonShort();
+    keyboard_releaseKeys();
+    display_changeScreen(SCREEN_PUMP_CONTROL);
+  }
+}
+
+inline void display_credits_listeners() {
+  if ((keyboard_escapePressed || keyboard_enterPressed) && keyboard_shortPress) {
+    keyboard_releaseKeys();
+    display_changeScreen(SCREEN_MAIN);
+  }
+}
+
 inline void display_loop(unsigned long now) {
   if (now - lastRun_loopDisplay < LOOP_THRESHOLD_DISPLAY) return;
   lastRun_loopDisplay = now;
 
   switch (display_screenCurrent) {
-    case SCREEN_DASHBOARD:    display_dashboard_listeners();    break;
-    case SCREEN_MAIN:         display_main_listeners();         break;
-    case SCREEN_SETTINGS:     display_settings_listeners();     break;
-    case SCREEN_PROGRAM:      display_program_listeners();      break;
-    case SCREEN_PROGRAM_EDIT: display_program_edit_listeners(); break;
+    case SCREEN_DASHBOARD:      display_dashboard_listeners();      break;
+    case SCREEN_MAIN:           display_main_listeners();           break;
+    case SCREEN_SETTINGS:       display_settings_listeners();       break;
+    case SCREEN_PROGRAM:        display_program_listeners();        break;
+    case SCREEN_PROGRAM_EDIT:   display_program_edit_listeners();   break;
+    case SCREEN_BREW_CONTROL:   display_brew_control_listeners();   break;
+    case SCREEN_HEATER_CONTROL: display_heater_control_listeners(); break;
+    case SCREEN_PUMP_CONTROL:   display_pump_control_listeners();   break;
+    case SCREEN_CREDITS:        display_credits_listeners();        break;
   }
 
   if (display_willChange > 0 && now > display_willChange) {
