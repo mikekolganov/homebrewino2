@@ -45,7 +45,7 @@ byte display_screenCurrent = SCREEN_DASHBOARD;
 byte display_screenPrevious;
 byte display_screenBack;
 byte display_iterableCount = 0;
-char display_activeIterable[9] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+char display_activeIterable[9]         = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 char display_activeIterablePrevious[9] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
 byte display_programEditItem = 0;
@@ -65,25 +65,28 @@ byte brew_programLength = 0;
 int  brew_program[PROGRAM_ITEMS_MAX_COUNT][3];
 
 byte heater_relayMode    = RELAY_MODE_AUTO;
-bool heater_relayEnabled = false;
 byte pump_relayMode      = RELAY_MODE_AUTO;
-bool pump_relayEnabled   = false;
 byte fan_relayMode       = RELAY_MODE_AUTO;
+bool heater_relayEnabled = false;
+bool pump_relayEnabled   = false;
 bool fan_relayEnabled    = false;
+unsigned long heater_relayEnabledTill = 0;
+unsigned long pump_relayEnabledTill   = 0;
+unsigned long fan_relayEnabledTill    = 0;
 
 int buzzer_sequence[20];
-byte buzzer_sequenceIndex = 0;
+byte buzzer_sequenceIndex  = 0;
 byte buzzer_sequenceLength = 0;
 unsigned long buzzer_nextToneTime = 0;
 
 const char POINTER_SYMBOL = char(165);
 const char DEGREE_SYMBOL  = char(223);
 char pointerSymbol[2] = { POINTER_SYMBOL, '\0' };
-char degreeSymbol[2] = { DEGREE_SYMBOL, '\0' };
-char deltaSymbol[2] = { 1, '\0' };
-char lockSymbol[2] = { 2, '\0'};
-char playSymbol[2] = { 3, '\0' };
-char pauseSymbol[2] = { 4, '\0' };
-char stopSymbol[2] = { 5, '\0' };
+char degreeSymbol[2]  = { DEGREE_SYMBOL,  '\0' };
+char deltaSymbol[2]   = { 1, '\0' };
+char lockSymbol[2]    = { 2, '\0'};
+char playSymbol[2]    = { 3, '\0' };
+char pauseSymbol[2]   = { 4, '\0' };
+char stopSymbol[2]    = { 5, '\0' };
 
 #endif

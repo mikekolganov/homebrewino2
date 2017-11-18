@@ -115,8 +115,8 @@ inline void display_render_dashboard() {
   }
 
   if (sensor_brewing1 > 0 && sensor_brewing2 > 0) {
-    char brew_temp1[7];
-    char brew_temp2[7];
+    char brew_temp1[8];
+    char brew_temp2[8];
     dtostrf(sensor_brewing1, 4, 1, brew_temp1);
     dtostrf(sensor_brewing2, 4, 1, brew_temp2);
     strcpy(brew_temp1 + strlen(brew_temp1), degreeSymbol);
@@ -129,7 +129,7 @@ inline void display_render_dashboard() {
 
   strcpy(display_secondLine, "");
 
-  display_willChange = now + 500;
+  display_willChange = now + 1000;
 }
 
 inline void display_render_main() {
@@ -348,41 +348,34 @@ inline void display_changeScreen(byte screen) {
 
 inline void display_dashboard_listeners() {
   if (keyboard_escapePressed && keyboard_shortPress) {
-    buzzer_buttonShort();
     keyboard_releaseKeys();
     display_changeScreen(SCREEN_MAIN);
   }
   else if (keyboard_enterPressed && keyboard_shortPress) {
-    buzzer_buttonShort();
     keyboard_releaseKeys();
     display_screenBack = SCREEN_DASHBOARD;
     display_changeScreen(SCREEN_BREW_CONTROL);
   }
   else if (keyboard_upPressed && keyboard_shortPress) {
-    buzzer_buttonShort();
     keyboard_releaseKeys();
     display_screenBack = SCREEN_DASHBOARD;
     display_changeScreen(SCREEN_HEATER_CONTROL);
   }
   else if (keyboard_downPressed && keyboard_shortPress) {
-    buzzer_buttonShort();
     keyboard_releaseKeys();
     display_screenBack = SCREEN_DASHBOARD;
     display_changeScreen(SCREEN_PUMP_CONTROL);
   }
   else if (keyboard_leftPressed && keyboard_shortPress) {
-    buzzer_buttonShort();
     keyboard_releaseKeys();
   }
   else if (keyboard_rightPressed && keyboard_shortPress) {
-    buzzer_buttonShort();
     keyboard_releaseKeys();
   }
 }
 
 inline void display_main_listeners() {
   if (keyboard_escapePressed && keyboard_shortPress) {
-    buzzer_buttonShort();
     keyboard_releaseKeys();
     display_changeScreen(SCREEN_DASHBOARD);
   }
@@ -391,40 +384,33 @@ inline void display_main_listeners() {
     keyboard_downPressed ? display_activeIterable[SCREEN_MAIN]++ : display_activeIterable[SCREEN_MAIN]--;
     if (display_activeIterable[SCREEN_MAIN] >= display_iterableCount) { display_activeIterable[SCREEN_MAIN] = 0; }
     else if (display_activeIterable[SCREEN_MAIN] < 0) { display_activeIterable[SCREEN_MAIN] = display_iterableCount - 1; }
-    buzzer_buttonShort();
     keyboard_releaseKeys();
     display_changeScreen(SCREEN_MAIN);
   }
   else if (display_activeIterable[SCREEN_MAIN] == SCREEN_ITEM_MAIN_PROGRAM && keyboard_enterPressed && keyboard_shortPress) {
-    buzzer_buttonShort();
     keyboard_releaseKeys();
     display_changeScreen(SCREEN_PROGRAM);
   }
   else if (display_activeIterable[SCREEN_MAIN] == SCREEN_ITEM_MAIN_BREWING && keyboard_enterPressed && keyboard_shortPress) {
-    buzzer_buttonShort();
     keyboard_releaseKeys();
     display_screenBack = SCREEN_MAIN;
     display_changeScreen(SCREEN_BREW_CONTROL);
   }
   else if (display_activeIterable[SCREEN_MAIN] == SCREEN_ITEM_MAIN_HEATER && keyboard_enterPressed && keyboard_shortPress) {
-    buzzer_buttonShort();
     keyboard_releaseKeys();
     display_screenBack = SCREEN_MAIN;
     display_changeScreen(SCREEN_HEATER_CONTROL);
   }
   else if (display_activeIterable[SCREEN_MAIN] == SCREEN_ITEM_MAIN_PUMP && keyboard_enterPressed && keyboard_shortPress) {
-    buzzer_buttonShort();
     keyboard_releaseKeys();
     display_screenBack = SCREEN_MAIN;
     display_changeScreen(SCREEN_PUMP_CONTROL);
   }
   else if (display_activeIterable[SCREEN_MAIN] == SCREEN_ITEM_MAIN_SETTINGS && keyboard_enterPressed && keyboard_shortPress) {
-    buzzer_buttonShort();
     keyboard_releaseKeys();
     display_changeScreen(SCREEN_SETTINGS);
   }
   else if (display_activeIterable[SCREEN_MAIN] == SCREEN_ITEM_MAIN_CREDITS && keyboard_enterPressed && keyboard_shortPress) {
-    buzzer_buttonShort();
     keyboard_releaseKeys();
     display_changeScreen(SCREEN_CREDITS);
   }
@@ -433,7 +419,6 @@ inline void display_main_listeners() {
 inline void display_settings_listeners() {  
   if ((keyboard_escapePressed || keyboard_enterPressed) && keyboard_shortPress) {
     event_settingsChanged = true;
-    buzzer_saved();
     keyboard_releaseKeys();
     display_changeScreen(SCREEN_MAIN);
   }
@@ -442,7 +427,6 @@ inline void display_settings_listeners() {
     keyboard_downPressed ? display_activeIterable[SCREEN_SETTINGS]++ : display_activeIterable[SCREEN_SETTINGS]--;
     if (display_activeIterable[SCREEN_SETTINGS] >= display_iterableCount) { display_activeIterable[SCREEN_SETTINGS] = 0; }
     else if (display_activeIterable[SCREEN_SETTINGS] < 0) { display_activeIterable[SCREEN_SETTINGS] = display_iterableCount - 1; }
-    buzzer_buttonShort();
     keyboard_releaseKeys();
     display_changeScreen(SCREEN_SETTINGS);
   }
@@ -482,7 +466,6 @@ inline void display_settings_listeners() {
 
 inline void display_program_listeners() {
   if (keyboard_escapePressed && keyboard_shortPress) {
-    buzzer_buttonShort();
     keyboard_releaseKeys();
     display_changeScreen(SCREEN_MAIN);
   }
@@ -491,18 +474,15 @@ inline void display_program_listeners() {
     keyboard_downPressed ? display_activeIterable[SCREEN_PROGRAM]++ : display_activeIterable[SCREEN_PROGRAM]--;
     if (display_activeIterable[SCREEN_PROGRAM] >= display_iterableCount) { display_activeIterable[SCREEN_PROGRAM] = 0; }
     else if (display_activeIterable[SCREEN_PROGRAM] < 0) { display_activeIterable[SCREEN_PROGRAM] = display_iterableCount - 1; }
-    buzzer_buttonShort();
     keyboard_releaseKeys();
     display_changeScreen(SCREEN_PROGRAM);
   }
   else if ((keyboard_upPressed || keyboard_downPressed) && keyboard_longPress) {
     bool isProgramItem = display_activeIterable[SCREEN_PROGRAM] <= brew_programLength - 1;
     if (isProgramItem) {
-      bool upDirection = display_activeIterable[SCREEN_PROGRAM] < display_activeIterablePrevious[SCREEN_PROGRAM];
-
       int temp[3];
       byte currentIndex = display_activeIterable[SCREEN_PROGRAM];
-      byte moveToIndex = upDirection ? currentIndex - 1 : currentIndex + 1;
+      char moveToIndex = keyboard_upPressed ? currentIndex - 1 : currentIndex + 1;
       if (moveToIndex >= brew_programLength) { moveToIndex = 0; }
       else if (moveToIndex < 0) { moveToIndex = brew_programLength - 1; }
 
@@ -514,7 +494,6 @@ inline void display_program_listeners() {
       display_activeIterablePrevious[SCREEN_PROGRAM] = currentIndex;
 
       event_programChanged = true;
-      buzzer_saved();
       keyboard_releaseKeys();
       display_changeScreen(SCREEN_PROGRAM);
     }
@@ -532,7 +511,6 @@ inline void display_program_listeners() {
     }
 
     display_programEditItem = display_activeIterable[SCREEN_PROGRAM];
-    buzzer_buttonShort();
     keyboard_releaseKeys();
     display_changeScreen(SCREEN_PROGRAM_EDIT);
   }
@@ -540,7 +518,6 @@ inline void display_program_listeners() {
 
 inline void display_program_edit_listeners() {
   if (keyboard_escapePressed && keyboard_shortPress) {
-    buzzer_buttonShort();
     keyboard_releaseKeys();
     display_changeScreen(SCREEN_PROGRAM);
   }
@@ -548,7 +525,6 @@ inline void display_program_edit_listeners() {
     keyboard_downPressed ? display_activeIterable[SCREEN_PROGRAM_EDIT]++ : display_activeIterable[SCREEN_PROGRAM_EDIT]--;
     if (display_activeIterable[SCREEN_PROGRAM_EDIT] >= display_iterableCount) { display_activeIterable[SCREEN_PROGRAM_EDIT] = 0; }
     else if (display_activeIterable[SCREEN_PROGRAM_EDIT] < 0) { display_activeIterable[SCREEN_PROGRAM_EDIT] = display_iterableCount - 1; }
-    buzzer_buttonShort();
     keyboard_releaseKeys();
     display_changeScreen(SCREEN_PROGRAM_EDIT);
   }
@@ -569,7 +545,6 @@ inline void display_program_edit_listeners() {
     if (display_programEdit_B < 0) display_programEdit_B = 0;
     if (display_programEdit_C < 0) display_programEdit_C = 0;
 
-    buzzer_buttonShort();
     keyboard_releaseKeys();
     display_changeScreen(SCREEN_PROGRAM_EDIT);
   }
@@ -588,7 +563,6 @@ inline void display_program_edit_listeners() {
     if (display_programEdit_B < 0) display_programEdit_B = 0;
     if (display_programEdit_C < 0) display_programEdit_C = 0;
 
-    buzzer_buttonShort();
     keyboard_releaseKeys();
     display_changeScreen(SCREEN_PROGRAM_EDIT);
   }
@@ -604,7 +578,6 @@ inline void display_program_edit_listeners() {
     }
 
     event_programChanged = true;
-    buzzer_saved();
     keyboard_releaseKeys();
     display_changeScreen(SCREEN_PROGRAM);
   }
@@ -626,7 +599,6 @@ inline void display_program_edit_listeners() {
       brew_programLength--;
 
       event_programChanged = true;
-      buzzer_deleted();
       keyboard_releaseKeys();
       display_changeScreen(SCREEN_PROGRAM);
     }
@@ -635,7 +607,6 @@ inline void display_program_edit_listeners() {
 
 inline void display_brew_control_listeners() {
   if (keyboard_escapePressed && keyboard_shortPress) {
-    buzzer_buttonShort();
     keyboard_releaseKeys();
     display_changeScreen(display_screenBack);
   }
@@ -656,7 +627,6 @@ inline void display_brew_control_listeners() {
         break;
     }
 
-    buzzer_buttonShort();
     keyboard_releaseKeys();
     display_changeScreen(display_screenBack);
   }
@@ -665,7 +635,6 @@ inline void display_brew_control_listeners() {
     keyboard_downPressed ? display_activeIterable[SCREEN_BREW_CONTROL]++ : display_activeIterable[SCREEN_BREW_CONTROL]--;
     if (display_activeIterable[SCREEN_BREW_CONTROL] >= display_iterableCount) { display_activeIterable[SCREEN_BREW_CONTROL] = 0; }
     else if (display_activeIterable[SCREEN_BREW_CONTROL] < 0) { display_activeIterable[SCREEN_BREW_CONTROL] = display_iterableCount - 1; }
-    buzzer_buttonShort();
     keyboard_releaseKeys();
     display_changeScreen(SCREEN_BREW_CONTROL);
   }
@@ -673,7 +642,6 @@ inline void display_brew_control_listeners() {
 
 inline void display_heater_control_listeners() {
   if (keyboard_escapePressed && keyboard_shortPress) {
-    buzzer_buttonShort();
     keyboard_releaseKeys();
     display_changeScreen(display_screenBack);
   }
@@ -682,7 +650,6 @@ inline void display_heater_control_listeners() {
     keyboard_downPressed ? display_activeIterable[SCREEN_HEATER_CONTROL]++ : display_activeIterable[SCREEN_HEATER_CONTROL]--;
     if (display_activeIterable[SCREEN_HEATER_CONTROL] >= display_iterableCount) { display_activeIterable[SCREEN_HEATER_CONTROL] = 0; }
     else if (display_activeIterable[SCREEN_HEATER_CONTROL] < 0) { display_activeIterable[SCREEN_HEATER_CONTROL] = display_iterableCount - 1; }
-    buzzer_buttonShort();
     keyboard_releaseKeys();
     display_changeScreen(SCREEN_HEATER_CONTROL);
   }
@@ -694,7 +661,6 @@ inline void display_heater_control_listeners() {
         }
         else {
           heater_relayMode = heater_relayMode == RELAY_MODE_AUTO ? RELAY_MODE_MANUAL : RELAY_MODE_AUTO;
-          buzzer_buttonShort();
         }
         break;
       case SCREEN_ITEM_HEATER_CONTROL_TOGGLE:
@@ -703,7 +669,6 @@ inline void display_heater_control_listeners() {
         }
         else {
           heater_relayEnabled = heater_relayEnabled ? false : true;
-          buzzer_buttonShort();
         }
         break;
     }
@@ -715,7 +680,6 @@ inline void display_heater_control_listeners() {
 
 inline void display_pump_control_listeners() {
   if (keyboard_escapePressed && keyboard_shortPress) {
-    buzzer_buttonShort();
     keyboard_releaseKeys();
     display_changeScreen(display_screenBack);
   }
@@ -724,7 +688,6 @@ inline void display_pump_control_listeners() {
     keyboard_downPressed ? display_activeIterable[SCREEN_PUMP_CONTROL]++ : display_activeIterable[SCREEN_PUMP_CONTROL]--;
     if (display_activeIterable[SCREEN_PUMP_CONTROL] >= display_iterableCount) { display_activeIterable[SCREEN_PUMP_CONTROL] = 0; }
     else if (display_activeIterable[SCREEN_PUMP_CONTROL] < 0) { display_activeIterable[SCREEN_PUMP_CONTROL] = display_iterableCount - 1; }
-    buzzer_buttonShort();
     keyboard_releaseKeys();
     display_changeScreen(SCREEN_PUMP_CONTROL);
   }
@@ -736,7 +699,6 @@ inline void display_pump_control_listeners() {
         }
         else {
           pump_relayMode = pump_relayMode == RELAY_MODE_AUTO ? RELAY_MODE_MANUAL : RELAY_MODE_AUTO;
-          buzzer_buttonShort();
         }
         break;
       case SCREEN_ITEM_PUMP_CONTROL_TOGGLE:
@@ -745,7 +707,6 @@ inline void display_pump_control_listeners() {
         }
         else {
           pump_relayEnabled = pump_relayEnabled ? false : true;
-          buzzer_buttonShort();
         }
         break;
     }
