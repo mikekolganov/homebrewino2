@@ -107,7 +107,6 @@ inline void display_render_dashboard() {
 
   switch (brew_status) {
     case BREW_STATUS_IDLE:
-    case BREW_STATUS_COMPLETED:
       strcpy(display_firstLine, stopSymbol); break;
     case BREW_STATUS_WORKING:
       strcpy(display_firstLine, playSymbol); break;
@@ -244,9 +243,26 @@ inline void display_program_edit() {
 
 inline void display_brew_control() {
   char items[2][17];
-  strcpy(items[SCREEN_ITEM_BREW_CONTROL_PLAY_PAUSE], "START BREWING");
-  strcpy(items[SCREEN_ITEM_BREW_CONTROL_STOP], "STOP BREWING");
-  display_render_iterable_menu(items, 2, display_activeIterable[SCREEN_BREW_CONTROL], display_activeIterablePrevious[SCREEN_BREW_CONTROL]);
+  byte itemsCount = 1;
+
+  if (brew_status == BREW_STATUS_IDLE) {
+    strcpy(items[SCREEN_ITEM_BREW_CONTROL_PLAY_PAUSE], "START BREW");
+  }
+  else if (brew_status == BREW_STATUS_WORKING) {
+    strcpy(items[SCREEN_ITEM_BREW_CONTROL_PLAY_PAUSE], "PAUSE BREW");
+  }
+  else if (brew_status == BREW_STATUS_PAUSED) {
+    strcpy(items[SCREEN_ITEM_BREW_CONTROL_PLAY_PAUSE], "CONTINUE BREW");
+  }
+
+  if (brew_status != BREW_STATUS_IDLE) {
+    itemsCount = 2;
+    strcpy(items[SCREEN_ITEM_BREW_CONTROL_STOP], "STOP BREW");
+  }
+  else {
+    display_activeIterable[SCREEN_BREW_CONTROL] = SCREEN_ITEM_BREW_CONTROL_PLAY_PAUSE;
+  }
+  display_render_iterable_menu(items, itemsCount, display_activeIterable[SCREEN_BREW_CONTROL], display_activeIterablePrevious[SCREEN_BREW_CONTROL]);
 }
 
 inline void display_heater_control() {
@@ -389,7 +405,6 @@ inline void display_settings_listeners() {
   else if ((keyboard_upPressed || keyboard_downPressed) && keyboard_shortPress) {
     display_activeIterablePrevious[SCREEN_SETTINGS] = display_activeIterable[SCREEN_SETTINGS];
     keyboard_downPressed ? display_activeIterable[SCREEN_SETTINGS]++ : display_activeIterable[SCREEN_SETTINGS]--;
-    // TODO: refactor; change underzero state behaviour to pre-set validation
     if (display_activeIterable[SCREEN_SETTINGS] >= display_iterableCount) { display_activeIterable[SCREEN_SETTINGS] = 0; }
     else if (display_activeIterable[SCREEN_SETTINGS] < 0) { display_activeIterable[SCREEN_SETTINGS] = display_iterableCount - 1; }
     buzzer_buttonShort();
@@ -589,10 +604,28 @@ inline void display_brew_control_listeners() {
     keyboard_releaseKeys();
     display_changeScreen(display_screenBack);
   }
+  else if (keyboard_enterPressed && keyboard_shortPress) {
+    switch (display_activeIterable[SCREEN_BREW_CONTROL]) {
+      case SCREEN_ITEM_BREW_CONTROL_PLAY_PAUSE:
+        if (brew_status == BREW_STATUS_IDLE || brew_status == BREW_STATUS_PAUSED) {
+          brew_status = BREW_STATUS_WORKING;
+        }
+        else if (brew_status == BREW_STATUS_WORKING) {
+          brew_status = BREW_STATUS_PAUSED;
+        }
+        break;
+      case SCREEN_ITEM_BREW_CONTROL_STOP:
+        brew_status = BREW_STATUS_IDLE;
+        break;
+    }
+
+    buzzer_buttonShort();
+    keyboard_releaseKeys();
+    display_changeScreen(display_screenBack);
+  }
   else if ((keyboard_upPressed || keyboard_downPressed) && keyboard_shortPress) {
     display_activeIterablePrevious[SCREEN_BREW_CONTROL] = display_activeIterable[SCREEN_BREW_CONTROL];
     keyboard_downPressed ? display_activeIterable[SCREEN_BREW_CONTROL]++ : display_activeIterable[SCREEN_BREW_CONTROL]--;
-    // TODO: refactor; change underzero state behaviour to pre-set validation
     if (display_activeIterable[SCREEN_BREW_CONTROL] >= display_iterableCount) { display_activeIterable[SCREEN_BREW_CONTROL] = 0; }
     else if (display_activeIterable[SCREEN_BREW_CONTROL] < 0) { display_activeIterable[SCREEN_BREW_CONTROL] = display_iterableCount - 1; }
     buzzer_buttonShort();
@@ -610,7 +643,6 @@ inline void display_heater_control_listeners() {
   else if ((keyboard_upPressed || keyboard_downPressed) && keyboard_shortPress) {
     display_activeIterablePrevious[SCREEN_HEATER_CONTROL] = display_activeIterable[SCREEN_HEATER_CONTROL];
     keyboard_downPressed ? display_activeIterable[SCREEN_HEATER_CONTROL]++ : display_activeIterable[SCREEN_HEATER_CONTROL]--;
-    // TODO: refactor; change underzero state behaviour to pre-set validation
     if (display_activeIterable[SCREEN_HEATER_CONTROL] >= display_iterableCount) { display_activeIterable[SCREEN_HEATER_CONTROL] = 0; }
     else if (display_activeIterable[SCREEN_HEATER_CONTROL] < 0) { display_activeIterable[SCREEN_HEATER_CONTROL] = display_iterableCount - 1; }
     buzzer_buttonShort();
@@ -628,7 +660,6 @@ inline void display_pump_control_listeners() {
   else if ((keyboard_upPressed || keyboard_downPressed) && keyboard_shortPress) {
     display_activeIterablePrevious[SCREEN_PUMP_CONTROL] = display_activeIterable[SCREEN_PUMP_CONTROL];
     keyboard_downPressed ? display_activeIterable[SCREEN_PUMP_CONTROL]++ : display_activeIterable[SCREEN_PUMP_CONTROL]--;
-    // TODO: refactor; change underzero state behaviour to pre-set validation
     if (display_activeIterable[SCREEN_PUMP_CONTROL] >= display_iterableCount) { display_activeIterable[SCREEN_PUMP_CONTROL] = 0; }
     else if (display_activeIterable[SCREEN_PUMP_CONTROL] < 0) { display_activeIterable[SCREEN_PUMP_CONTROL] = display_iterableCount - 1; }
     buzzer_buttonShort();

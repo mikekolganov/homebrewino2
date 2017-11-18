@@ -45,8 +45,8 @@ byte display_screenCurrent = SCREEN_DASHBOARD;
 byte display_screenPrevious;
 byte display_screenBack;
 byte display_iterableCount = 0;
-char display_activeIterable[9] = { 0, 0, 0, 0, 0, 0 };
-char display_activeIterablePrevious[9] = { 0, 0, 0, 0, 0, 0 };
+char display_activeIterable[9] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+char display_activeIterablePrevious[9] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
 byte display_programEditItem = 0;
 int  display_programEdit_A = 0;
