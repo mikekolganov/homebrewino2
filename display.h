@@ -267,17 +267,52 @@ inline void display_brew_control() {
 
 inline void display_heater_control() {
   char items[2][17];
-  display_wrapAlign(items[SCREEN_ITEM_HEATER_CONTROL_MODE], "HEATER", "AUTO", 15);
-  display_wrapAlign(items[SCREEN_ITEM_HEATER_CONTROL_TOGGLE], "STATE", "OFF", 15);
-  display_render_iterable_menu(items, 2, display_activeIterable[SCREEN_HEATER_CONTROL], display_activeIterablePrevious[SCREEN_HEATER_CONTROL]);
+  byte itemsCount = 1;
+
+  char heaterModeValue[7];
+  switch (heater_relayMode) {
+    case RELAY_MODE_AUTO:   strcpy(heaterModeValue, "AUTO");   break;
+    case RELAY_MODE_MANUAL: strcpy(heaterModeValue, "MANUAL"); break;
+  }
+
+  char heaterValue[4];
+  strcpy(heaterValue, heater_relayEnabled ? "ON" : "OFF");
+
+  if (heater_relayMode == RELAY_MODE_MANUAL) {
+    itemsCount = 2;
+  }
+  else {
+    display_activeIterable[SCREEN_HEATER_CONTROL] = SCREEN_ITEM_HEATER_CONTROL_MODE;
+  }
+
+  display_wrapAlign(items[SCREEN_ITEM_HEATER_CONTROL_MODE], "HEATER", heaterModeValue, 15);
+  display_wrapAlign(items[SCREEN_ITEM_HEATER_CONTROL_TOGGLE], "STATE", heaterValue, 15);
+  display_render_iterable_menu(items, itemsCount, display_activeIterable[SCREEN_HEATER_CONTROL], display_activeIterablePrevious[SCREEN_HEATER_CONTROL]);
 }
 
 inline void display_pump_control() {
   char items[2][17];
-  display_wrapAlign(items[SCREEN_ITEM_PUMP_CONTROL_MODE], "PUMP", "AUTO", 15);
-  display_wrapAlign(items[SCREEN_ITEM_PUMP_CONTROL_TOGGLE], "STATE", "OFF", 15);
-  display_render_iterable_menu(items, 2, display_activeIterable[SCREEN_PUMP_CONTROL], display_activeIterablePrevious[SCREEN_PUMP_CONTROL]);
-}
+  byte itemsCount = 1;
+
+  char pumpModeValue[7];
+  switch (pump_relayMode) {
+    case RELAY_MODE_AUTO:   strcpy(pumpModeValue, "AUTO");   break;
+    case RELAY_MODE_MANUAL: strcpy(pumpModeValue, "MANUAL"); break;
+  }
+
+  char pumpValue[4];
+  strcpy(pumpValue, pump_relayEnabled ? "ON" : "OFF");
+
+  if (pump_relayMode == RELAY_MODE_MANUAL) {
+    itemsCount = 2;
+  }
+  else {
+    display_activeIterable[SCREEN_PUMP_CONTROL] = SCREEN_ITEM_PUMP_CONTROL_MODE;
+  }
+
+  display_wrapAlign(items[SCREEN_ITEM_PUMP_CONTROL_MODE], "PUMP", pumpModeValue, 15);
+  display_wrapAlign(items[SCREEN_ITEM_PUMP_CONTROL_TOGGLE], "STATE", pumpValue, 15);
+  display_render_iterable_menu(items, itemsCount, display_activeIterable[SCREEN_PUMP_CONTROL], display_activeIterablePrevious[SCREEN_PUMP_CONTROL]);}
 
 inline void display_credits() {
   strcpy(display_firstLine, "DEVOTED TO");
@@ -649,6 +684,31 @@ inline void display_heater_control_listeners() {
     keyboard_releaseKeys();
     display_changeScreen(SCREEN_HEATER_CONTROL);
   }
+  else if ((keyboard_leftPressed || keyboard_rightPressed) && keyboard_shortPress) {
+    switch (display_activeIterable[SCREEN_HEATER_CONTROL]) {
+      case SCREEN_ITEM_HEATER_CONTROL_MODE:
+        if (brew_status != BREW_STATUS_IDLE) {
+          buzzer_error();
+        }
+        else {
+          heater_relayMode = heater_relayMode == RELAY_MODE_AUTO ? RELAY_MODE_MANUAL : RELAY_MODE_AUTO;
+          buzzer_buttonShort();
+        }
+        break;
+      case SCREEN_ITEM_HEATER_CONTROL_TOGGLE:
+        if (brew_status != BREW_STATUS_IDLE) {
+          buzzer_error();
+        }
+        else {
+          heater_relayEnabled = heater_relayEnabled ? false : true;
+          buzzer_buttonShort();
+        }
+        break;
+    }
+
+    keyboard_releaseKeys();
+    display_changeScreen(SCREEN_HEATER_CONTROL);
+  }
 }
 
 inline void display_pump_control_listeners() {
@@ -663,6 +723,31 @@ inline void display_pump_control_listeners() {
     if (display_activeIterable[SCREEN_PUMP_CONTROL] >= display_iterableCount) { display_activeIterable[SCREEN_PUMP_CONTROL] = 0; }
     else if (display_activeIterable[SCREEN_PUMP_CONTROL] < 0) { display_activeIterable[SCREEN_PUMP_CONTROL] = display_iterableCount - 1; }
     buzzer_buttonShort();
+    keyboard_releaseKeys();
+    display_changeScreen(SCREEN_PUMP_CONTROL);
+  }
+  else if ((keyboard_leftPressed || keyboard_rightPressed) && keyboard_shortPress) {
+    switch (display_activeIterable[SCREEN_PUMP_CONTROL]) {
+      case SCREEN_ITEM_PUMP_CONTROL_MODE:
+        if (brew_status != BREW_STATUS_IDLE) {
+          buzzer_error();
+        }
+        else {
+          pump_relayMode = pump_relayMode == RELAY_MODE_AUTO ? RELAY_MODE_MANUAL : RELAY_MODE_AUTO;
+          buzzer_buttonShort();
+        }
+        break;
+      case SCREEN_ITEM_PUMP_CONTROL_TOGGLE:
+        if (brew_status != BREW_STATUS_IDLE) {
+          buzzer_error();
+        }
+        else {
+          pump_relayEnabled = pump_relayEnabled ? false : true;
+          buzzer_buttonShort();
+        }
+        break;
+    }
+
     keyboard_releaseKeys();
     display_changeScreen(SCREEN_PUMP_CONTROL);
   }
