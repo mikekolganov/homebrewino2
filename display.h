@@ -424,9 +424,14 @@ inline void display_main_listeners() {
     display_changeScreen(SCREEN_PROGRAM);
   }
   else if (display_activeIterable[SCREEN_MAIN] == SCREEN_ITEM_MAIN_BREWING && keyboard_enterPressed && keyboard_shortPress) {
+    if (brew_programLength > 0) {
+      display_screenBack = SCREEN_MAIN;
+      display_changeScreen(SCREEN_BREW_CONTROL);
+    }
+    else {
+      buzzer_error();
+    }
     keyboard_releaseKeys();
-    display_screenBack = SCREEN_MAIN;
-    display_changeScreen(SCREEN_BREW_CONTROL);
   }
   else if (display_activeIterable[SCREEN_MAIN] == SCREEN_ITEM_MAIN_HEATER && keyboard_enterPressed && keyboard_shortPress) {
     keyboard_releaseKeys();
