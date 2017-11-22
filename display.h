@@ -129,7 +129,15 @@ inline void display_render_dashboard() {
     strcpy(display_firstLine + strlen(display_firstLine), " NO SENSORS");
   }
 
-  strcpy(display_secondLine, "");
+  if (display_messagesCount > 0) {
+    if (display_activeIterable[SCREEN_DASHBOARD] >= display_messagesCount) {
+      display_activeIterable[SCREEN_DASHBOARD] = 0;
+    }
+    strcpy(display_secondLine, display_messages[display_activeIterable[SCREEN_DASHBOARD]]);
+  }
+  else {
+    strcpy(display_secondLine, "");
+  }
 
   display_willChange = now + 1000;
 }
@@ -147,7 +155,7 @@ inline void display_render_main() {
 
 inline void display_render_settings() {
   char powerValue[6];
-  itoa(setting_heaterPower * HEATER_POWER_MULTIPLIER, powerValue, 10);
+  itoa(setting_heaterPower, powerValue, 10);
   strcpy(powerValue + strlen(powerValue), "W");
 
   char tankValue[6];
@@ -164,8 +172,12 @@ inline void display_render_settings() {
 
   char pumpAtValue[6];
   strcpy(pumpAtValue, deltaSymbol);
-  dtostrf(setting_pumpTempDelta * PUMP_TEMP_DELTA_MULTIPLIER, 3, 1, pumpAtValue + strlen(pumpAtValue));
+  dtostrf(setting_pumpTempDelta, 3, 1, pumpAtValue + strlen(pumpAtValue));
   strcpy(pumpAtValue + strlen(pumpAtValue), degreeSymbol);
+
+  char waterBoilTempValue[7];
+  dtostrf(setting_waterBoilTemp, 3, 1, waterBoilTempValue);
+  strcpy(waterBoilTempValue + strlen(waterBoilTempValue), degreeSymbol);
 
   char items[5][17];
   display_wrapAlign(items[SCREEN_ITEM_SETTINGS_POWER], "POWER", powerValue, 15);
@@ -173,7 +185,8 @@ inline void display_render_settings() {
   display_wrapAlign(items[SCREEN_ITEM_SETTINGS_BACKLIGHT], "BACKLIGHT", backlightValue, 15);
   display_wrapAlign(items[SCREEN_ITEM_SETTINGS_FAN_AT], "FAN AT", fanAtValue, 15);
   display_wrapAlign(items[SCREEN_ITEM_SETTINGS_PUMP_AT], "PUMP AT", pumpAtValue, 15);
-  display_render_iterable_menu(items, 5, display_activeIterable[SCREEN_SETTINGS], display_activeIterablePrevious[SCREEN_SETTINGS]);
+  display_wrapAlign(items[SCREEN_ITEM_SETTINGS_BOIL_TEMP], "BOIL AT", waterBoilTempValue, 15);
+  display_render_iterable_menu(items, 6, display_activeIterable[SCREEN_SETTINGS], display_activeIterablePrevious[SCREEN_SETTINGS]);
 }
 
 inline void display_program() {
@@ -385,10 +398,10 @@ inline void display_dashboard_listeners() {
     display_screenBack = SCREEN_DASHBOARD;
     display_changeScreen(SCREEN_PUMP_CONTROL);
   }
-  else if (keyboard_leftPressed && keyboard_shortPress) {
-    keyboard_releaseKeys();
-  }
-  else if (keyboard_rightPressed && keyboard_shortPress) {
+  else if ((keyboard_leftPressed || keyboard_rightPressed) && keyboard_shortPress) {
+    keyboard_rightPressed ? display_activeIterable[SCREEN_DASHBOARD]++ : display_activeIterable[SCREEN_DASHBOARD]--;
+    if (display_activeIterable[SCREEN_DASHBOARD] >= display_messagesCount) { display_activeIterable[SCREEN_DASHBOARD] = 0; }
+    else if (display_activeIterable[SCREEN_DASHBOARD] < 0) { display_activeIterable[SCREEN_DASHBOARD] = display_messagesCount - 1; }
     keyboard_releaseKeys();
   }
 }
@@ -452,13 +465,13 @@ inline void display_settings_listeners() {
   else if ((keyboard_leftPressed || keyboard_rightPressed) && keyboard_shortPress) {
     switch (display_activeIterable[SCREEN_SETTINGS]) {
       case SCREEN_ITEM_SETTINGS_POWER:
-        if      (keyboard_leftPressed  && setting_heaterPower > 1)  setting_heaterPower--;
-        else if (keyboard_rightPressed && setting_heaterPower < 44) setting_heaterPower++;
+        if      (keyboard_leftPressed  && setting_heaterPower > 500)  setting_heaterPower = setting_heaterPower - 50;
+        else if (keyboard_rightPressed && setting_heaterPower < 4400) setting_heaterPower = setting_heaterPower + 50;
         else buzzer_error();
         break;
       case SCREEN_ITEM_SETTINGS_TANK:
-        if      (keyboard_leftPressed  && setting_tankVolume > 1)  setting_tankVolume--;
-        else if (keyboard_rightPressed && setting_tankVolume < 80) setting_tankVolume++;
+        if      (keyboard_leftPressed  && setting_tankVolume > 5)  setting_tankVolume--;
+        else if (keyboard_rightPressed && setting_tankVolume < 60) setting_tankVolume++;
         else buzzer_error();
         break;
       case SCREEN_ITEM_SETTINGS_BACKLIGHT:
@@ -473,8 +486,13 @@ inline void display_settings_listeners() {
         else buzzer_error();
         break;
       case SCREEN_ITEM_SETTINGS_PUMP_AT:
-        if      (keyboard_leftPressed  && setting_pumpTempDelta > 1)  setting_pumpTempDelta--;
-        else if (keyboard_rightPressed && setting_pumpTempDelta < 50) setting_pumpTempDelta++;
+        if      (keyboard_leftPressed  && setting_pumpTempDelta > 0.1) setting_pumpTempDelta = setting_pumpTempDelta - 0.1;
+        else if (keyboard_rightPressed && setting_pumpTempDelta < 2.0) setting_pumpTempDelta = setting_pumpTempDelta + 0.1;
+        else buzzer_error();
+        break;
+      case SCREEN_ITEM_SETTINGS_BOIL_TEMP:
+        if      (keyboard_leftPressed  && setting_waterBoilTemp > 95.0)  setting_waterBoilTemp = setting_waterBoilTemp - 0.1;
+        else if (keyboard_rightPressed && setting_waterBoilTemp < 105.0) setting_waterBoilTemp = setting_waterBoilTemp + 0.1;
         else buzzer_error();
         break;
     }
@@ -634,13 +652,16 @@ inline void display_brew_control_listeners() {
       switch (display_activeIterable[SCREEN_BREW_CONTROL]) {
         case SCREEN_ITEM_BREW_CONTROL_PLAY_PAUSE:
           if (brew_status == BREW_STATUS_IDLE || brew_status == BREW_STATUS_PAUSED) {
+            display_messagesCount = 0;
             brew_start();
           }
           else if (brew_status == BREW_STATUS_WORKING) {
+            display_messagesCount = 0;
             brew_pause();
           }
           break;
         case SCREEN_ITEM_BREW_CONTROL_STOP:
+          display_messagesCount = 0;
           brew_stop();
           break;
       }

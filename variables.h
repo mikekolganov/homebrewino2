@@ -43,19 +43,23 @@ byte display_screenCurrent = SCREEN_DASHBOARD;
 byte display_screenPrevious;
 byte display_screenBack;
 byte display_iterableCount = 0;
-char display_activeIterable[9]         = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-char display_activeIterablePrevious[9] = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+char display_activeIterable[10]         = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+char display_activeIterablePrevious[10] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
 byte display_programEditItem = 0;
 int  display_programEdit_A = 0;
 int  display_programEdit_B = 0;
 int  display_programEdit_C = 0;
 
-byte setting_heaterPower;
-byte setting_tankVolume;
-byte setting_backlightLevel;
-byte setting_fanTemp;
-byte setting_pumpTempDelta;
+char display_messages[4][17];
+byte display_messagesCount = 0;
+
+int   setting_heaterPower;
+byte  setting_tankVolume;
+byte  setting_backlightLevel;
+byte  setting_fanTemp;
+float setting_pumpTempDelta;
+float setting_waterBoilTemp;
 
 byte brew_status = BREW_STATUS_IDLE;
 unsigned long brew_timeProcessed = 0;
