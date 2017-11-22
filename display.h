@@ -2,6 +2,7 @@
 #include "variables.h"
 #include "relays.h"
 #include "brew.h"
+#include "utils.h"
 
 inline void display_wrapAlign(char *result, char left[15], char right[15], byte resultLength) {
   for(byte i = 0; i < resultLength; i++) {
@@ -16,16 +17,6 @@ inline void display_wrapAlign(char *result, char left[15], char right[15], byte 
     }
   }
   result[resultLength] = '\0';
-}
-
-inline void display_format_minutes(char *result, int minutes) {
-  int h = minutes / 60;
-  int m = minutes % 60;
-
-  itoa(h, result + strlen(result), 10);
-  strcpy(result + strlen(result), ":");
-  if (m < 10) strcpy(result + strlen(result), "0");
-  itoa(m, result + strlen(result), 10);
 }
 
 inline void display_render_iterable_menu(char items[][17], byte count, byte activeItem, byte prevActiveItem) {
