@@ -15,11 +15,11 @@ word adress_setting_pumpTempDelta  = EEPROM.getAddress(sizeof(float));
 word adress_setting_waterBoilTemp  = EEPROM.getAddress(sizeof(float));
 
 inline void store_save_program() {
-  EEPROM.writeByte(address_brew_programLength, brew_programLength);
+  EEPROM.updateByte(address_brew_programLength, brew_programLength);
   word cellAddress = address_brew_program;
   for (byte i = 0; i < sizeof(brew_program) / sizeof(brew_program[0]); i++) {
     for (byte j = 0; j < sizeof(brew_program[0]) / sizeof(brew_program[0][0]); j++) {
-      EEPROM.writeInt(cellAddress, brew_program[i][j]);
+      EEPROM.updateInt(cellAddress, brew_program[i][j]);
       cellAddress += sizeof(brew_program[0][0]);
     }
   }
@@ -37,8 +37,8 @@ inline void store_read_program() {
 }
 
 inline void store_save_brewing_state() {
-  EEPROM.writeByte(address_brew_status, brew_status);
-  EEPROM.writeLong(address_brew_timeProcessed, brew_timeProcessed);
+  EEPROM.updateByte(address_brew_status, brew_status);
+  EEPROM.updateLong(address_brew_timeProcessed, brew_timeProcessed);
 }
 
 inline void store_read_brewing_state() {
@@ -47,12 +47,12 @@ inline void store_read_brewing_state() {
 }
 
 inline void store_save_settings() {
-  EEPROM.writeInt(adress_setting_heaterPower,      setting_heaterPower);
-  EEPROM.writeByte(adress_setting_tankVolume,      setting_tankVolume);
-  EEPROM.writeByte(adress_setting_backlightLevel,  setting_backlightLevel);
-  EEPROM.writeByte(adress_setting_fanTemp,         setting_fanTemp);
-  EEPROM.writeFloat(adress_setting_pumpTempDelta,  setting_pumpTempDelta);
-  EEPROM.writeFloat(adress_setting_waterBoilTemp,  setting_waterBoilTemp);
+  EEPROM.updateInt(adress_setting_heaterPower,      setting_heaterPower);
+  EEPROM.updateByte(adress_setting_tankVolume,      setting_tankVolume);
+  EEPROM.updateByte(adress_setting_backlightLevel,  setting_backlightLevel);
+  EEPROM.updateByte(adress_setting_fanTemp,         setting_fanTemp);
+  EEPROM.updateFloat(adress_setting_pumpTempDelta,  setting_pumpTempDelta);
+  EEPROM.updateFloat(adress_setting_waterBoilTemp,  setting_waterBoilTemp);
 }
 
 inline void store_read_settings() {
