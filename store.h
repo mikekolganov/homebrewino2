@@ -90,4 +90,9 @@ inline void store_loop(unsigned long now) {
     store_save_program();
     event_programChanged = false;
   }
+
+  if (event_brewStateChanged) {
+    store_save_brewing_state();
+    event_brewStateChanged = false;
+  }
 }

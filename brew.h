@@ -11,12 +11,14 @@ inline void brew_start() {
   relays_turn_off_heater();
   relays_turn_off_pump();
   brew_status = BREW_STATUS_WORKING;
+  event_brewStateChanged = true;
 }
 
 inline void brew_pause() {
   relays_turn_off_heater();
   relays_turn_off_pump();
   brew_status = BREW_STATUS_PAUSED;
+  event_brewStateChanged = true;
 }
 
 inline void brew_stop() {
@@ -24,6 +26,7 @@ inline void brew_stop() {
   relays_turn_off_pump();
   brew_status = BREW_STATUS_IDLE;
   brew_timeProcessed = 0;
+  event_brewStateChanged = true;
 }
 
 inline byte brew_get_current_step() {}
@@ -47,18 +50,19 @@ inline void brew_loop(unsigned long now) {
   display_messagesCount = 0;
 
   if (brew_status == BREW_STATUS_IDLE) {
-    display_messagesCount = 2;
-    strcpy(display_messages[0], "IDLE");
-    strcpy(display_messages[1], "NOTHING TO DO");
+    display_messagesCount = 1;
+    strcpy(display_messages[0], "IDLE, GO BREW!");
   }
   else if (brew_status == BREW_STATUS_PAUSED) {
     display_messagesCount = 1;
-    strcpy(display_messages[0], "BREW PAUSED");
+    strcpy(display_messages[0], "BREW PAUSED...");
   }
   else if (brew_status == BREW_STATUS_WORKING) {
     display_messagesCount = 1;
     strcpy(display_messages[0], "BREWING!");
 
+    // TODO: Save brew state only if passed time changed
+    event_brewStateChanged = true;
     relays_turn_on_heater();
   }
 }

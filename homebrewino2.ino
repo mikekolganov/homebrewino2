@@ -39,6 +39,7 @@ void setup() {
   EEPROM.setMaxAllowedWrites(2000);
   store_setup();
   analogWrite(PIN_DISPLAY_BACKLIGHT, round(255 / 100 * setting_backlightLevel));
+  sensors_loop(millis());
 }
 
 void loop() {
@@ -46,10 +47,10 @@ void loop() {
   brew_loop(now);
   buzzer_loop(now);
   display_loop(now);
-  fan_loop(now);
   keyboard_loop(now);
   pump_loop(now);
   relays_loop(now);
   sensors_loop(now);
+  fan_loop(now);
   store_loop(now);
 }

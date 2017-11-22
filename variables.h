@@ -13,8 +13,9 @@ unsigned long lastRun_loopRelays   = 0;
 unsigned long lastRun_loopSensors  = 0;
 unsigned long lastRun_loopStore    = 0;
 
-bool event_settingsChanged = false;
-bool event_programChanged = false;
+bool event_settingsChanged  = false;
+bool event_programChanged   = false;
+bool event_brewStateChanged = false;
 
 float sensor_brewing1 = 0;
 float sensor_brewing2 = 0;
