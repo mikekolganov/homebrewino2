@@ -23,6 +23,8 @@ LiquidCrystal lcd(PIN_DISPLAY_1, PIN_DISPLAY_2, PIN_DISPLAY_3, PIN_DISPLAY_4, PI
 #include "relays.h"
 
 void setup() {
+  // Wipe out all data from EEPROM, uncomment in case of fire
+  // for (int i = 0 ; i < 1024 ; i++) EEPROM.write(i, 0);
   Serial.begin(9600);
   lcd.createChar(1, DELTA_SYMBOL_1);
   lcd.createChar(2, LOCK_SYMBOL_2);
