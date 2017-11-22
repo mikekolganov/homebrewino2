@@ -20,6 +20,7 @@ LiquidCrystal lcd(PIN_DISPLAY_1, PIN_DISPLAY_2, PIN_DISPLAY_3, PIN_DISPLAY_4, PI
 #include "display.h"
 #include "sensors.h"
 #include "variables.h"
+#include "relays.h"
 
 void setup() {
   Serial.begin(9600);
@@ -38,17 +39,17 @@ void setup() {
   EEPROM.setMaxAllowedWrites(2000);
   store_setup();
   analogWrite(PIN_DISPLAY_BACKLIGHT, round(255 / 100 * setting_backlightLevel));
-  sensors_loop(millis());
 }
 
 void loop() {
   unsigned long now = millis();
   brew_loop(now);
   buzzer_loop(now);
+  display_loop(now);
   fan_loop(now);
   keyboard_loop(now);
   pump_loop(now);
-  display_loop(now);
+  relays_loop(now);
   sensors_loop(now);
   store_loop(now);
 }

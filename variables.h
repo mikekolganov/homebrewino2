@@ -5,11 +5,11 @@
 #include "symbols.h"
 
 unsigned long lastRun_loopBrew     = 0;
-unsigned long lastRun_loopBuzzer   = 0;
+unsigned long lastRun_loopDisplay  = 0;
 unsigned long lastRun_loopFan      = 0;
 unsigned long lastRun_loopKeyboard = 0;
 unsigned long lastRun_loopPump     = 0;
-unsigned long lastRun_loopDisplay  = 0;
+unsigned long lastRun_loopRelays   = 0;
 unsigned long lastRun_loopSensors  = 0;
 unsigned long lastRun_loopStore    = 0;
 
@@ -34,13 +34,11 @@ bool keyboard_rightPressed  = false;
 bool keyboard_enterPressed  = false;
 bool keyboard_escapePressed = false;
 
-bool relay_heaterEnabled = false;
-bool relay_fanEnabled    = false;
-bool relay_pumpEnabled   = false;
-
 unsigned long display_willChange = 0;
 char display_firstLine[17];
 char display_secondLine[17];
+char display_firstLine_previous[17];
+char display_secondLine_previous[17];
 byte display_screenCurrent = SCREEN_DASHBOARD;
 byte display_screenPrevious;
 byte display_screenBack;
@@ -60,19 +58,21 @@ byte setting_fanTemp;
 byte setting_pumpTempDelta;
 
 byte brew_status = BREW_STATUS_IDLE;
-unsigned long brew_timeProcessed;
+unsigned long brew_timeProcessed = 0;
 byte brew_programLength = 0;
 int  brew_program[PROGRAM_ITEMS_MAX_COUNT][3];
 
 byte heater_relayMode    = RELAY_MODE_AUTO;
 byte pump_relayMode      = RELAY_MODE_AUTO;
 byte fan_relayMode       = RELAY_MODE_AUTO;
-bool heater_relayEnabled = false;
-bool pump_relayEnabled   = false;
-bool fan_relayEnabled    = false;
-unsigned long heater_relayEnabledTill = 0;
-unsigned long pump_relayEnabledTill   = 0;
-unsigned long fan_relayEnabledTill    = 0;
+
+bool relay_heaterEnabled = false;
+bool relay_pumpEnabled   = false;
+bool relay_fanEnabled    = false;
+
+unsigned long relay_heaterEnabledTill = 0;
+unsigned long relay_pumpEnabledTill   = 0;
+unsigned long relay_fanEnabledTill    = 0;
 
 int buzzer_sequence[20];
 byte buzzer_sequenceIndex  = 0;

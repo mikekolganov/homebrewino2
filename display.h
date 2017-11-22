@@ -1,5 +1,7 @@
 #include "constants.h"
 #include "variables.h"
+#include "relays.h"
+#include "brew.h"
 
 inline void display_wrapAlign(char *result, char left[15], char right[15], byte resultLength) {
   for(byte i = 0; i < resultLength; i++) {
@@ -276,7 +278,7 @@ inline void display_heater_control() {
   }
 
   char heaterValue[4];
-  strcpy(heaterValue, heater_relayEnabled ? "ON" : "OFF");
+  strcpy(heaterValue, relay_heaterEnabled ? "ON" : "OFF");
 
   if (heater_relayMode == RELAY_MODE_MANUAL) {
     itemsCount = 2;
@@ -301,7 +303,7 @@ inline void display_pump_control() {
   }
 
   char pumpValue[4];
-  strcpy(pumpValue, pump_relayEnabled ? "ON" : "OFF");
+  strcpy(pumpValue, relay_pumpEnabled ? "ON" : "OFF");
 
   if (pump_relayMode == RELAY_MODE_MANUAL) {
     itemsCount = 2;
@@ -333,10 +335,22 @@ inline void display_render() {
     case SCREEN_PUMP_CONTROL:   display_pump_control();     break;
     case SCREEN_CREDITS:        display_credits();          break;
   }
-  lcd.clear();
-  lcd.print(display_firstLine);
-  lcd.setCursor(0, 1);
-  lcd.print(display_secondLine);
+
+  if (strcmp(display_firstLine, display_firstLine_previous) != 0) {
+    byte length = strlen(display_firstLine);
+    if (length < 16) for (byte i = length; i < 16; i++) strcpy(display_firstLine + strlen(display_firstLine), " ");
+    strcpy(display_firstLine_previous, display_firstLine);
+    lcd.setCursor(0, 0);
+    lcd.print(display_firstLine);
+  }
+
+  if (strcmp(display_secondLine, display_secondLine_previous) != 0) {
+    byte length = strlen(display_secondLine);
+    if (length < 16) for (byte i = length; i < 16; i++) strcpy(display_secondLine + strlen(display_secondLine), " ");
+    strcpy(display_secondLine_previous, display_secondLine);
+    lcd.setCursor(0, 1);
+    lcd.print(display_secondLine);
+  }
 }
 
 inline void display_changeScreen(byte screen) {
@@ -352,9 +366,14 @@ inline void display_dashboard_listeners() {
     display_changeScreen(SCREEN_MAIN);
   }
   else if (keyboard_enterPressed && keyboard_shortPress) {
+    if (brew_programLength > 0) {
+      display_screenBack = SCREEN_DASHBOARD;
+      display_changeScreen(SCREEN_BREW_CONTROL);
+    }
+    else {
+      buzzer_error();
+    }
     keyboard_releaseKeys();
-    display_screenBack = SCREEN_DASHBOARD;
-    display_changeScreen(SCREEN_BREW_CONTROL);
   }
   else if (keyboard_upPressed && keyboard_shortPress) {
     keyboard_releaseKeys();
@@ -611,20 +630,23 @@ inline void display_brew_control_listeners() {
     display_changeScreen(display_screenBack);
   }
   else if (keyboard_enterPressed && keyboard_shortPress) {
-    switch (display_activeIterable[SCREEN_BREW_CONTROL]) {
-      case SCREEN_ITEM_BREW_CONTROL_PLAY_PAUSE:
-        heater_relayMode = RELAY_MODE_AUTO;
-        pump_relayMode   = RELAY_MODE_AUTO;
-        if (brew_status == BREW_STATUS_IDLE || brew_status == BREW_STATUS_PAUSED) {
-          brew_status = BREW_STATUS_WORKING;
-        }
-        else if (brew_status == BREW_STATUS_WORKING) {
-          brew_status = BREW_STATUS_PAUSED;
-        }
-        break;
-      case SCREEN_ITEM_BREW_CONTROL_STOP:
-        brew_status = BREW_STATUS_IDLE;
-        break;
+    if (brew_programLength > 0) {
+      switch (display_activeIterable[SCREEN_BREW_CONTROL]) {
+        case SCREEN_ITEM_BREW_CONTROL_PLAY_PAUSE:
+          if (brew_status == BREW_STATUS_IDLE || brew_status == BREW_STATUS_PAUSED) {
+            brew_start();
+          }
+          else if (brew_status == BREW_STATUS_WORKING) {
+            brew_pause();
+          }
+          break;
+        case SCREEN_ITEM_BREW_CONTROL_STOP:
+          brew_stop();
+          break;
+      }
+    }
+    else {
+      buzzer_error();
     }
 
     keyboard_releaseKeys();
@@ -656,7 +678,7 @@ inline void display_heater_control_listeners() {
   else if ((keyboard_leftPressed || keyboard_rightPressed) && keyboard_shortPress) {
     switch (display_activeIterable[SCREEN_HEATER_CONTROL]) {
       case SCREEN_ITEM_HEATER_CONTROL_MODE:
-        if (brew_status != BREW_STATUS_IDLE) {
+        if (brew_status == BREW_STATUS_WORKING) {
           buzzer_error();
         }
         else {
@@ -664,11 +686,11 @@ inline void display_heater_control_listeners() {
         }
         break;
       case SCREEN_ITEM_HEATER_CONTROL_TOGGLE:
-        if (brew_status != BREW_STATUS_IDLE) {
+        if (brew_status == BREW_STATUS_WORKING) {
           buzzer_error();
         }
         else {
-          heater_relayEnabled = heater_relayEnabled ? false : true;
+          relay_heaterEnabled ? relays_turn_off_heater() : relays_turn_on_heater();
         }
         break;
     }
@@ -694,7 +716,7 @@ inline void display_pump_control_listeners() {
   else if ((keyboard_leftPressed || keyboard_rightPressed) && keyboard_shortPress) {
     switch (display_activeIterable[SCREEN_PUMP_CONTROL]) {
       case SCREEN_ITEM_PUMP_CONTROL_MODE:
-        if (brew_status != BREW_STATUS_IDLE) {
+        if (brew_status == BREW_STATUS_WORKING) {
           buzzer_error();
         }
         else {
@@ -702,11 +724,11 @@ inline void display_pump_control_listeners() {
         }
         break;
       case SCREEN_ITEM_PUMP_CONTROL_TOGGLE:
-        if (brew_status != BREW_STATUS_IDLE) {
+        if (brew_status == BREW_STATUS_WORKING) {
           buzzer_error();
         }
         else {
-          pump_relayEnabled = pump_relayEnabled ? false : true;
+          relay_pumpEnabled ? relays_turn_off_pump() : relays_turn_on_pump();
         }
         break;
     }
