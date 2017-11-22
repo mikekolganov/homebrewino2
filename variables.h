@@ -17,9 +17,10 @@ bool event_settingsChanged  = false;
 bool event_programChanged   = false;
 bool event_brewStateChanged = false;
 
-float sensor_brewing1 = 0;
-float sensor_brewing2 = 0;
-float sensor_fan = 0;
+float sensor_brewing1       = 0;
+float sensor_brewing2       = 0;
+float sensor_brewingAverage = 0;
+float sensor_fan            = 0;
 
 unsigned long keyboard_lastKeyAt = 0;
 unsigned long keyboard_holdPressAt = 0;
@@ -62,10 +63,10 @@ byte  setting_fanTemp;
 float setting_pumpTempDelta;
 float setting_waterBoilTemp;
 
-byte brew_status = BREW_STATUS_IDLE;
+byte          brew_status        = BREW_STATUS_IDLE;
 unsigned long brew_timeProcessed = 0;
-byte brew_programLength = 0;
-int  brew_program[PROGRAM_ITEMS_MAX_COUNT][3];
+byte          brew_programLength = 0;
+int           brew_program[PROGRAM_ITEMS_MAX_COUNT][3];
 
 byte heater_relayMode    = RELAY_MODE_AUTO;
 byte pump_relayMode      = RELAY_MODE_AUTO;
