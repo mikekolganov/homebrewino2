@@ -124,7 +124,7 @@ inline void display_render_dashboard() {
     if (display_activeIterable[SCREEN_DASHBOARD] >= display_messagesCount) {
       display_activeIterable[SCREEN_DASHBOARD] = 0;
     }
-    strcpy(display_secondLine, display_messages[display_activeIterable[SCREEN_DASHBOARD]]);
+    strncpy(display_secondLine, display_messages[display_activeIterable[SCREEN_DASHBOARD]], 16);
   }
   else {
     strcpy(display_secondLine, "");

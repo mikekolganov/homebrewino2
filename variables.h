@@ -67,6 +67,7 @@ byte          brew_status        = BREW_STATUS_IDLE;
 unsigned long brew_timeProcessed = 0;
 byte          brew_programLength = 0;
 int           brew_program[PROGRAM_ITEMS_MAX_COUNT][3];
+byte          brew_previousStep;
 
 byte heater_relayMode    = RELAY_MODE_AUTO;
 byte pump_relayMode      = RELAY_MODE_AUTO;

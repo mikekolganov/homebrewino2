@@ -14,6 +14,8 @@ word adress_setting_fanTemp        = EEPROM.getAddress(sizeof(byte));
 word adress_setting_pumpTempDelta  = EEPROM.getAddress(sizeof(float));
 word adress_setting_waterBoilTemp  = EEPROM.getAddress(sizeof(float));
 
+word address_brew_previousStep     = EEPROM.getAddress(sizeof(byte));
+
 inline void store_save_program() {
   EEPROM.updateByte(address_brew_programLength, brew_programLength);
   word cellAddress = address_brew_program;
@@ -39,11 +41,13 @@ inline void store_read_program() {
 inline void store_save_brewing_state() {
   EEPROM.updateByte(address_brew_status, brew_status);
   EEPROM.updateLong(address_brew_timeProcessed, brew_timeProcessed);
+  EEPROM.updateByte(address_brew_previousStep, brew_previousStep);
 }
 
 inline void store_read_brewing_state() {
-  brew_status = EEPROM.readByte(address_brew_status);
+  brew_status        = EEPROM.readByte(address_brew_status);
   brew_timeProcessed = EEPROM.readLong(address_brew_timeProcessed);
+  brew_previousStep  = EEPROM.readByte(address_brew_previousStep);
 }
 
 inline void store_save_settings() {

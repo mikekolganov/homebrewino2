@@ -31,6 +31,7 @@ void setup() {
   lcd.createChar(3, PLAY_SYMBOL_3);
   lcd.createChar(4, PAUSE_SYMBOL_4);
   lcd.createChar(5, STOP_SYMBOL_5);
+  lcd.noAutoscroll();
   lcd.begin(16, 2);
   pinMode(PIN_RELAY_HEATER, OUTPUT);
   pinMode(PIN_RELAY_FAN, OUTPUT);
